@@ -1982,9 +1982,6 @@ async function exportOTSExcel(){
   const bulan = document.getElementById('ots-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
   const tahun = new Date().getFullYear();
   showOverlay('Menyiapkan file Excel OTS...');
-  const tahun = d.getFullYear();
-
-  showOverlay('Menyiapkan file Excel OTS...');
   try {
     const json = await fetchGAS({action:'exportOTS', bulan, tahun: String(tahun), pin: currentPin});
     hideOverlay();
@@ -2004,7 +2001,6 @@ async function exportOTSExcel(){
 async function exportAbsensi(){
   const bulan = document.getElementById('absen-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
   const tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
-  const bulan = BULAN[d.getMonth()];
   showOverlay('Menyusun data absensi dari Sheet...');
   try {
     const json = await fetchGAS({action:'generateAbsensi', bulan, tahun, pin: currentPin});
@@ -4653,20 +4649,21 @@ async function deleteNota(id, idx){
       if(ci>=0) _pengajuanRecords[ci]={..._pengajuanRecords[ci],notas};
       showToast('Nota dihapus','ok');
       detailPengajuan(id);
-    
-// ══════════════════════════════════════════════════════════
-//  ABSENSI - Preview di menu
-// ══════════════════════════════════════════════════════════
+    } else showToast('Gagal','err');
+  } catch(e){hideOverlay();showToast('Gagal: '+e.message,'err');}
+}
+
+// ── ABSENSI Preview ──────────────────────────────────────────────────────────
 async function loadAbsensi(){
-  const bulan = document.getElementById('absen-filter-bulan')?.value || '';
-  const tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
-  const pic   = document.getElementById('absen-filter-pic')?.value || '';
-  const el    = document.getElementById('absensi-content');
+  var bulan = document.getElementById('absen-filter-bulan')?.value || '';
+  var tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
+  var pic   = document.getElementById('absen-filter-pic')?.value || '';
+  var el    = document.getElementById('absensi-content');
   if(!el) return;
   el.innerHTML = '<div class="loading-text">⏳ Menyusun data absensi...</div>';
   try {
-    const json = await fetchGAS({action:'generateAbsensi', bulan, tahun, pic, pin: currentPin});
-    if(json.status !== 'ok' || !json.data?.length){
+    var json = await fetchGAS({action:'generateAbsensi', bulan, tahun, pic, pin: currentPin});
+    if(json.status !== 'ok' || !json.data || !json.data.length){
       el.innerHTML = '<div class="no-data"><div class="no-data-icon">📋</div>Tidak ada data untuk periode ini.</div>';
       return;
     }
@@ -4677,182 +4674,171 @@ async function loadAbsensi(){
   }
 }
 
-let _absensiData = [];
+var _absensiData = [];
 
 function renderAbsensiPreview(dataArr){
-  const el = document.getElementById('absensi-content');
+  var el = document.getElementById('absensi-content');
   if(!el) return;
 
-  const HARI_COLOR = {Sabtu:'#e0f2fe',Minggu:'#fee2e2'};
+  // Build tab buttons
+  var tabsHtml = '';
+  for(var ti=0; ti<dataArr.length; ti++){
+    var activeClass = ti===0 ? 'sub-btn active' : 'sub-btn';
+    tabsHtml += '<button class="'+activeClass+'" onclick="showAbsensiTab('+ti+')" id="absen-tab-'+ti+'">'+dataArr[ti].pic+'</button> ';
+  }
 
-  const tabs = dataArr.map((picData,i) => `
-    <button class="sub-btn ${i===0?'active':''}" onclick="showAbsensiTab(${i})" id="absen-tab-${i}">${picData.pic}</button>
-  `).join('');
+  // Build panels
+  var panelsHtml = '';
+  for(var pi=0; pi<dataArr.length; pi++){
+    var picData = dataArr[pi];
+    var rowsHtml = '';
+    for(var ri=0; ri<picData.rows.length; ri++){
+      var r = picData.rows[ri];
+      var isLibur = r.kegiatan === 'Libur';
+      var isTL    = r.status === 'TL';
+      var bg = '#fff';
+      if(r.hari === 'Sabtu') bg = '#e0f2fe';
+      else if(r.hari === 'Minggu') bg = '#fee2e2';
+      else if(isTL) bg = '#f3e5f5';
+      var kegHuman = _formatKegiatanHuman(r.kegiatan);
+      var tglFmt = r.tgl ? new Date(r.tgl).toLocaleDateString('id-ID',{day:'numeric',month:'short'}) : '';
+      var tlBadge = isTL ? '<span class="badge badge-purple">TL</span>' : '';
+      var ketCell = isLibur ? '<span style="color:var(--text3);font-style:italic;">Libur</span>' : kegHuman;
+      rowsHtml += '<tr style="background:'+bg+';border-bottom:1px solid var(--border);">';
+      rowsHtml += '<td style="padding:6px 8px;font-size:12px;color:var(--text2);">'+r.hari+'</td>';
+      rowsHtml += '<td style="padding:6px 8px;font-size:12px;color:var(--text2);">'+tglFmt+'</td>';
+      rowsHtml += '<td style="padding:6px 8px;font-size:12px;">'+ketCell+'</td>';
+      rowsHtml += '<td style="padding:6px 8px;font-size:12px;text-align:center;">'+(r.lokasi||'')+'</td>';
+      rowsHtml += '<td style="padding:6px 8px;font-size:12px;text-align:center;">'+tlBadge+'</td>';
+      rowsHtml += '</tr>';
+    }
+    var panelStyle = pi===0 ? '' : 'display:none;';
+    panelsHtml += '<div id="absen-panel-'+pi+'" style="'+panelStyle+'">';
+    panelsHtml += '<div style="font-size:12px;color:var(--text2);margin-bottom:8px;"><b>'+picData.pic+'</b> — '+picData.bulan+' '+picData.tahun+' · TL: '+picData.tlCount+' hari</div>';
+    panelsHtml += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    panelsHtml += '<thead><tr style="background:var(--surface3);"><th style="padding:7px 8px;text-align:left;">Hari</th><th style="padding:7px 8px;text-align:left;">Tgl</th><th style="padding:7px 8px;text-align:left;">Kegiatan</th><th style="padding:7px 8px;text-align:center;">Lokasi PIC</th><th style="padding:7px 8px;text-align:center;">Status</th></tr></thead>';
+    panelsHtml += '<tbody>'+rowsHtml+'</tbody></table></div></div>';
+  }
 
-  const panels = dataArr.map((picData,i) => {
-    const rows = picData.rows.map(r => {
-      const isLibur = r.kegiatan === 'Libur';
-      const isTL    = r.status === 'TL';
-      const bg = HARI_COLOR[r.hari] || (isTL ? '#f3e5f5' : '#fff');
-      const kegHuman = _formatKegiatanHuman(r.kegiatan);
-      const tglFmt = r.tgl ? new Date(r.tgl).toLocaleDateString('id-ID',{day:'numeric',month:'short'}) : '';
-      return `<tr style="background:${bg};border-bottom:1px solid var(--border);">
-        <td style="padding:6px 8px;font-size:12px;color:var(--text2);white-space:nowrap;">${r.hari}</td>
-        <td style="padding:6px 8px;font-size:12px;color:var(--text2);white-space:nowrap;">${tglFmt}</td>
-        <td style="padding:6px 8px;font-size:12px;${isLibur?'color:var(--text3);font-style:italic;':''}">${isLibur?'Libur':kegHuman}</td>
-        <td style="padding:6px 8px;font-size:12px;text-align:center;">${r.lokasi||''}</td>
-        <td style="padding:6px 8px;font-size:12px;text-align:center;">${isTL?'<span class="badge badge-purple">TL</span>':''}</td>
-      </tr>`;
-    }).join('');
-    return `<div id="absen-panel-${i}" style="${i===0?'':'display:none;'}">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;"><b>${picData.pic}</b> — ${picData.bulan} ${picData.tahun} · TL: ${picData.tlCount} hari</div>
-      <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead><tr style="background:var(--surface3);">
-          <th style="padding:7px 8px;text-align:left;">Hari</th>
-          <th style="padding:7px 8px;text-align:left;">Tgl</th>
-          <th style="padding:7px 8px;text-align:left;">Kegiatan</th>
-          <th style="padding:7px 8px;text-align:center;">Lokasi PIC</th>
-          <th style="padding:7px 8px;text-align:center;">Status</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      </div>
-    </div>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div class="card" style="padding:12px;">
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${tabs}</div>
-      ${panels}
-    </div>`;
+  el.innerHTML = '<div class="card" style="padding:12px;"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'+tabsHtml+'</div>'+panelsHtml+'</div>';
 }
 
 function showAbsensiTab(idx){
-  document.querySelectorAll('[id^="absen-tab-"]').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('[id^="absen-panel-"]').forEach(p=>p.style.display='none');
-  const tab = document.getElementById('absen-tab-'+idx);
-  const panel = document.getElementById('absen-panel-'+idx);
+  document.querySelectorAll('[id^="absen-tab-"]').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('[id^="absen-panel-"]').forEach(function(p){p.style.display='none';});
+  var tab = document.getElementById('absen-tab-'+idx);
+  var panel = document.getElementById('absen-panel-'+idx);
   if(tab) tab.classList.add('active');
   if(panel) panel.style.display='block';
 }
 
 function _formatKegiatanHuman(raw){
   if(!raw) return '';
-  // Hapus prefix teknis [HW] [NET] → ganti dengan deskripsi humanis
   return raw
     .replace(/\[HW\]\s*/g,'')
     .replace(/\[NET\]\s*/g,'')
     .replace(/OTS ke\s+/gi,'Kunjungan OTS ke ')
-    .replace(/→/g,'-')
+    .replace(/\u2192/g,'-')
     .replace(/;\s*/g,', ')
     .replace(/\s+/g,' ')
     .trim();
 }
 
-// ══════════════════════════════════════════════════════════
-//  PENGAJUAN BARANG - Edit inline
-// ══════════════════════════════════════════════════════════
-let _editingPjnId = null;
+// ── Edit Pengajuan Barang ────────────────────────────────────────────────────
+var _editingPjnId = null;
 
 function editPengajuanReport(id){
-  const r = _pengajuanRecords?.find(x=>x.id===id);
+  var r = (_pengajuanRecords||[]).find(function(x){return x.id===id;});
   if(!r){showToast('Data tidak ditemukan','info');return;}
-  if(typeof r.items==='string') try{r.items=JSON.parse(r.items);}catch(e){r.items=[];}
-  if(typeof r.notas==='string')  try{r.notas=JSON.parse(r.notas);}catch(e){r.notas=[];}
+  try{if(typeof r.items==='string') r.items=JSON.parse(r.items);}catch(e){r.items=[];}
+  try{if(typeof r.notas==='string')  r.notas=JSON.parse(r.notas);}catch(e){r.notas=[];}
   _editingPjnId = id;
 
-  const itemRows = (r.items||[]).map((b,i)=>`
-    <tr id="pjn-edit-row-${i}">
-      <td style="padding:4px;"><input class="pjn-input" value="${b.nama||''}" id="pe-nama-${i}" placeholder="Nama Barang"></td>
-      <td style="padding:4px;"><input class="pjn-input" value="${b.type||''}" id="pe-type-${i}" placeholder="Type"></td>
-      <td style="padding:4px;"><input class="pjn-input" value="${b.brand||''}" id="pe-brand-${i}" placeholder="Brand"></td>
-      <td style="padding:4px;"><input class="pjn-input" value="${b.jumlah||''}" id="pe-jumlah-${i}" placeholder="Jumlah"></td>
-      <td style="padding:4px;text-align:center;"><button onclick="removePjnEditRow(${i})" class="btn-danger-sm" title="Hapus">✕</button></td>
-    </tr>`).join('');
+  var itemRows = '';
+  var items = r.items||[];
+  for(var ii=0;ii<items.length;ii++){
+    var b=items[ii];
+    itemRows += '<tr id="pjn-edit-row-'+ii+'">';
+    itemRows += '<td style="padding:4px;"><input class="pjn-input" value="'+(b.nama||'')+'" id="pe-nama-'+ii+'" placeholder="Nama Barang"></td>';
+    itemRows += '<td style="padding:4px;"><input class="pjn-input" value="'+(b.type||'')+'" id="pe-type-'+ii+'" placeholder="Type"></td>';
+    itemRows += '<td style="padding:4px;"><input class="pjn-input" value="'+(b.brand||'')+'" id="pe-brand-'+ii+'" placeholder="Brand"></td>';
+    itemRows += '<td style="padding:4px;"><input class="pjn-input" value="'+(b.jumlah||'')+'" id="pe-jumlah-'+ii+'" placeholder="Jumlah"></td>';
+    itemRows += '<td style="padding:4px;text-align:center;"><button onclick="removePjnEditRow('+ii+')" class="btn-danger-sm">✕</button></td>';
+    itemRows += '</tr>';
+  }
 
-  document.getElementById('modal-ots-title').textContent = '✏️ Edit Pengajuan — '+r.tempat;
-  document.getElementById('modal-ots-body').innerHTML = `
-    <div style="background:var(--surface3);padding:12px;border-radius:var(--radius-sm);margin-bottom:14px;">
-      <div class="form-row">
-        <div class="form-group"><label>Tempat</label><input type="text" id="pe-tempat" class="input-field" value="${r.tempat||''}"></div>
-        <div class="form-group"><label>Tanggal</label><input type="date" id="pe-tgl" class="input-field" value="${r.tgl||''}"></div>
-      </div>
-      <div class="form-group"><label>Keterangan</label><input type="text" id="pe-ket" class="input-field" value="${r.ket||''}"></div>
-    </div>
-    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:8px;">Daftar Barang</div>
-    <div style="overflow-x:auto;">
-    <table style="width:100%;border-collapse:collapse;font-size:12px;" id="pjn-edit-table">
-      <thead><tr style="background:var(--surface3);">
-        <th style="padding:7px 8px;text-align:left;">Nama</th>
-        <th style="padding:7px 8px;text-align:left;">Type</th>
-        <th style="padding:7px 8px;text-align:left;">Brand</th>
-        <th style="padding:7px 8px;text-align:left;">Jumlah</th>
-        <th style="padding:7px 8px;"></th>
-      </tr></thead>
-      <tbody id="pjn-edit-tbody">${itemRows}</tbody>
-    </table>
-    </div>
-    <button onclick="addPjnEditRow()" class="btn-outline" style="margin-top:8px;width:100%;">+ Tambah Baris</button>
-    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button onclick="savePengajuanEdit('${id}')" class="btn-primary" style="flex:1;margin-top:0;padding:10px;">💾 Simpan Perubahan</button>
-      <button onclick="closeOTSModal()" style="padding:10px 20px;background:var(--surface3);color:var(--text2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">✕ Batal</button>
-    </div>`;
+  var bodyHtml = '';
+  bodyHtml += '<div style="background:var(--surface3);padding:12px;border-radius:var(--radius-sm);margin-bottom:14px;">';
+  bodyHtml += '<div class="form-row">';
+  bodyHtml += '<div class="form-group"><label>Tempat</label><input type="text" id="pe-tempat" class="input-field" value="'+(r.tempat||'')+'"></div>';
+  bodyHtml += '<div class="form-group"><label>Tanggal</label><input type="date" id="pe-tgl" class="input-field" value="'+(r.tgl||'')+'"></div>';
+  bodyHtml += '</div>';
+  bodyHtml += '<div class="form-group"><label>Keterangan</label><input type="text" id="pe-ket" class="input-field" value="'+(r.ket||'')+'"></div>';
+  bodyHtml += '</div>';
+  bodyHtml += '<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:8px;">Daftar Barang</div>';
+  bodyHtml += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;" id="pjn-edit-table">';
+  bodyHtml += '<thead><tr style="background:var(--surface3);"><th style="padding:7px 8px;text-align:left;">Nama</th><th style="padding:7px 8px;text-align:left;">Type</th><th style="padding:7px 8px;text-align:left;">Brand</th><th style="padding:7px 8px;text-align:left;">Jumlah</th><th></th></tr></thead>';
+  bodyHtml += '<tbody id="pjn-edit-tbody">'+itemRows+'</tbody></table></div>';
+  bodyHtml += '<button onclick="addPjnEditRow()" class="btn-outline" style="margin-top:8px;width:100%;">+ Tambah Baris</button>';
+  bodyHtml += '<div style="display:flex;gap:10px;margin-top:16px;">';
+  bodyHtml += '<button onclick="savePengajuanEdit(\''+id+'\')" class="btn-primary" style="flex:1;margin-top:0;padding:10px;">💾 Simpan</button>';
+  bodyHtml += '<button onclick="closeOTSModal()" style="padding:10px 20px;background:var(--surface3);color:var(--text2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">✕ Batal</button>';
+  bodyHtml += '</div>';
+
+  document.getElementById('modal-ots-title').textContent = 'Edit Pengajuan — '+(r.tempat||'');
+  document.getElementById('modal-ots-body').innerHTML = bodyHtml;
   document.getElementById('ots-modal').classList.add('show');
 }
 
-let _pjnEditRowCount = 0;
 function addPjnEditRow(){
-  const tbody = document.getElementById('pjn-edit-tbody');
+  var tbody = document.getElementById('pjn-edit-tbody');
   if(!tbody) return;
-  const i = tbody.querySelectorAll('tr').length;
-  const tr = document.createElement('tr');
+  var i = tbody.querySelectorAll('tr').length;
+  var tr = document.createElement('tr');
   tr.id = 'pjn-edit-row-'+i;
-  tr.innerHTML = `
-    <td style="padding:4px;"><input class="pjn-input" id="pe-nama-${i}" placeholder="Nama Barang"></td>
-    <td style="padding:4px;"><input class="pjn-input" id="pe-type-${i}" placeholder="Type"></td>
-    <td style="padding:4px;"><input class="pjn-input" id="pe-brand-${i}" placeholder="Brand"></td>
-    <td style="padding:4px;"><input class="pjn-input" id="pe-jumlah-${i}" placeholder="Jumlah"></td>
-    <td style="padding:4px;text-align:center;"><button onclick="removePjnEditRow(${i})" class="btn-danger-sm">✕</button></td>`;
+  tr.innerHTML = '<td style="padding:4px;"><input class="pjn-input" id="pe-nama-'+i+'" placeholder="Nama Barang"></td>'
+    +'<td style="padding:4px;"><input class="pjn-input" id="pe-type-'+i+'" placeholder="Type"></td>'
+    +'<td style="padding:4px;"><input class="pjn-input" id="pe-brand-'+i+'" placeholder="Brand"></td>'
+    +'<td style="padding:4px;"><input class="pjn-input" id="pe-jumlah-'+i+'" placeholder="Jumlah"></td>'
+    +'<td style="padding:4px;text-align:center;"><button onclick="removePjnEditRow('+i+')" class="btn-danger-sm">x</button></td>';
   tbody.appendChild(tr);
 }
 
 function removePjnEditRow(i){
-  const row = document.getElementById('pjn-edit-row-'+i);
+  var row = document.getElementById('pjn-edit-row-'+i);
   if(row) row.remove();
 }
 
 async function savePengajuanEdit(id){
-  const tempat = document.getElementById('pe-tempat')?.value?.trim();
-  const tgl    = document.getElementById('pe-tgl')?.value;
-  const ket    = document.getElementById('pe-ket')?.value?.trim();
-  const tbody  = document.getElementById('pjn-edit-tbody');
+  var tempat = (document.getElementById('pe-tempat')?.value||'').trim();
+  var tgl    = document.getElementById('pe-tgl')?.value||'';
+  var ket    = (document.getElementById('pe-ket')?.value||'').trim();
+  var tbody  = document.getElementById('pjn-edit-tbody');
   if(!tempat){showToast('Isi Tempat/Lokasi','info');return;}
 
-  const items = [];
-  let no = 1;
-  tbody.querySelectorAll('tr').forEach(row => {
-    const idx = row.id.replace('pjn-edit-row-','');
-    const nama   = document.getElementById('pe-nama-'+idx)?.value?.trim();
-    const type   = document.getElementById('pe-type-'+idx)?.value?.trim();
-    const brand  = document.getElementById('pe-brand-'+idx)?.value?.trim();
-    const jumlah = document.getElementById('pe-jumlah-'+idx)?.value?.trim();
+  var items = [];
+  var no = 1;
+  tbody.querySelectorAll('tr').forEach(function(row){
+    var idx = row.id.replace('pjn-edit-row-','');
+    var nama   = (document.getElementById('pe-nama-'+idx)?.value||'').trim();
+    var type   = (document.getElementById('pe-type-'+idx)?.value||'').trim();
+    var brand  = (document.getElementById('pe-brand-'+idx)?.value||'').trim();
+    var jumlah = (document.getElementById('pe-jumlah-'+idx)?.value||'').trim();
     if(nama) items.push({no:no++, nama, type, brand, jumlah});
   });
 
-  const r = _pengajuanRecords?.find(x=>x.id===id)||{};
+  var r = (_pengajuanRecords||[]).find(function(x){return x.id===id;})||{};
   showOverlay('Menyimpan perubahan...');
   try {
-    const payload = {action:'updatePengajuanFull', pin:currentPin, id, tempat, tgl, ket, items, notas:r.notas||[]};
-    const fd = new FormData();
+    var payload = {action:'updatePengajuanFull', pin:currentPin, id, tempat, tgl, ket, items, notas:r.notas||[]};
+    var fd = new FormData();
     fd.append('data', JSON.stringify(payload));
-    const res  = await fetch(getUrl(), {method:'POST', body:fd});
-    const json = await res.json();
+    var res  = await fetch(getUrl(), {method:'POST', body:fd});
+    var json = await res.json();
     hideOverlay();
     if(json.status === 'ok'){
-      // Update cache
-      const ci = _pengajuanRecords.findIndex(x=>x.id===id);
-      if(ci>=0) _pengajuanRecords[ci] = {..._pengajuanRecords[ci], tempat, tgl, ket, items};
+      var ci = (_pengajuanRecords||[]).findIndex(function(x){return x.id===id;});
+      if(ci>=0) _pengajuanRecords[ci] = Object.assign({}, _pengajuanRecords[ci], {tempat, tgl, ket, items});
       showToast('Pengajuan berhasil diupdate!','ok');
       closeOTSModal();
       renderReportPengajuan(_pengajuanRecords,'');
@@ -4861,6 +4847,7 @@ async function savePengajuanEdit(id){
     }
   } catch(e){hideOverlay();showToast('Gagal: '+e.message,'err');}
 }
+
 </script>
 </body>
 </html>
