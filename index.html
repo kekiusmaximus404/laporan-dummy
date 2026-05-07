@@ -641,6 +641,7 @@ body{margin:0;overflow-x:hidden;}
       <button class="sub-btn" id="sbtn-rep-ots" onclick="switchSub('rep-ots','report')">📋 Report OTS</button>
       <button class="sub-btn" id="sbtn-rep-barang" onclick="switchSub('rep-barang','report')">📦 Penggunaan Barang</button>
       <button class="sub-btn" id="sbtn-rep-pengajuan" onclick="switchSub('rep-pengajuan','report')">📝 Pengajuan Barang</button>
+      <button class="sub-btn" id="sbtn-rep-absensi" onclick="switchSub('rep-absensi','report')">📋 Absensi</button>
     </div>
 
     <!-- HOME DASHBOARD -->
@@ -654,38 +655,8 @@ body{margin:0;overflow-x:hidden;}
     </div>
     <div id="pane-maintenance" class="pane">
       <div class="container">
-      <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--text3)"></span>Identitas</div>
-        <div class="form-row">
-          <div class="form-group"><label>Nama PIC</label>
-            <select id="pic">
-              <option value="">— pilih —</option>
-              <option>Abet Nego</option>
-              <option>Goprid Tendo Padagi</option>
-              <option>Evan Budiargo</option>
-              <option>Herniumus Chandra</option>
-            </select>
-          </div>
-          <div class="form-group"><label>Tanggal</label><input type="date" id="tgl"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Branch Office</label><input type="text" id="branch" placeholder="cth: Cabang Sudirman"></div>
-          <div class="form-group"><label>Area</label>
-            <select id="branch-kode">
-              <option value="">— pilih area —</option>
-              <option value="SINTANG1">Sintang 1</option>
-              <option value="SINTANG2">Sintang 2</option>
-              <option value="SEKADAU">Sekadau</option>
-              <option value="SANGGAU">Sanggau</option>
-              <option value="PONTIANAK">Pontianak Raya</option>
-              <option value="MELAWI">Melawi</option>
-              <option value="KAPUASHULU">Kapuas Hulu</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
-      <!-- ── ACTIVITY TYPE SELECTOR ── -->
+      <!-- ── STEP 1: JENIS AKTIVITAS ── -->
       <div class="card">
         <div class="card-title">Jenis Aktivitas</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:0;">
@@ -716,7 +687,7 @@ body{margin:0;overflow-x:hidden;}
           <div class="form-group"><label>Jenis Perbaikan</label><select id="hw-sub"><option>— pilih kategori dulu —</option></select></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Lokasi / Unit</label><input type="text" id="hw-lokasi" placeholder="cth: Lantai 2, Ruang Kasir"></div>
+          <div class="form-group"><label>Lokasi PIC</label><input type="text" id="hw-lokasi" placeholder="cth: Lantai 2, Ruang Kasir"></div>
           <div class="form-group"><label>Status</label><select id="hw-status"><option>Selesai</option><option>Proses</option><option>Eskalasi</option></select></div>
         </div>
         <div class="form-row-1"><div class="form-group"><label>Keterangan</label><textarea id="hw-ket" placeholder="Deskripsikan perbaikan..."></textarea></div></div>
@@ -741,7 +712,7 @@ body{margin:0;overflow-x:hidden;}
           <div class="form-group"><label>Jenis Perbaikan</label><select id="net-sub"><option>— pilih kategori dulu —</option></select></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Lokasi / Segment</label><input type="text" id="net-lokasi" placeholder="cth: Gedung A, VLAN Finance"></div>
+          <div class="form-group"><label>Lokasi PIC</label><input type="text" id="net-lokasi" placeholder="cth: Gedung A, Server Room"></div>
           <div class="form-group"><label>Status</label><select id="net-status"><option>Selesai</option><option>Proses</option><option>Eskalasi</option></select></div>
         </div>
         <div class="form-row-1"><div class="form-group"><label>Keterangan</label><textarea id="net-ket" placeholder="Deskripsikan perbaikan jaringan..."></textarea></div></div>
@@ -752,13 +723,52 @@ body{margin:0;overflow-x:hidden;}
       <!-- ── DAILY PANEL ── -->
       <div id="act-panel-daily" class="card" style="display:none;">
         <div class="card-title"><span class="dot" style="background:var(--warn)"></span>Daily Activity</div>
-        <div class="form-row-1"><div class="form-group"><label>Kegiatan yang Dilakukan</label><textarea id="daily-ket" placeholder="Ceritakan kegiatan di luar perbaikan hardware/jaringan..." style="height:90px;"></textarea></div></div>
         <div class="form-row">
-          <div class="form-group"><label>Lokasi / Unit</label><input type="text" id="daily-lokasi" placeholder="cth: Ruang Server, Kantor Pusat"></div>
-          <div class="form-group"><label>Durasi (opsional)</label><input type="text" id="daily-durasi" placeholder="cth: 2 jam"></div>
+          <div class="form-group"><label>Nama PIC</label>
+            <select id="daily-pic">
+              <option value="">— pilih —</option>
+              <option>Abet Nego</option><option>Goprid Tendo Padagi</option>
+              <option>Evan Budiargo</option><option>Herniumus Chandra</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Tanggal</label><input type="date" id="daily-tgl"></div>
         </div>
+        <div class="form-row-1"><div class="form-group"><label>Kegiatan yang Dilakukan</label><textarea id="daily-ket" placeholder="Ceritakan kegiatan di luar perbaikan hardware/jaringan..." style="height:90px;"></textarea></div></div>
+        <div class="form-row-1">
+          <div class="form-group"><label>Lokasi PIC</label><input type="text" id="daily-lokasi" placeholder="cth: Ruang Server, Kantor Pusat"></div>
+        </div>
+        <input type="hidden" id="daily-durasi" value="">
         <button class="btn-outline" onclick="addDaily()">+ Tambah aktivitas</button>
         <div id="daily-list"></div>
+      </div>
+
+      <!-- ── IDENTITAS (muncul setelah pilih tipe HW/Net) ── -->
+      <div id="act-identitas-card" class="card" style="display:none;">
+        <div class="card-title"><span class="dot" style="background:var(--text3)"></span>Identitas</div>
+        <div class="form-row">
+          <div class="form-group"><label>Nama PIC</label>
+            <select id="pic">
+              <option value="">— pilih —</option>
+              <option>Abet Nego</option>
+              <option>Goprid Tendo Padagi</option>
+              <option>Evan Budiargo</option>
+              <option>Herniumus Chandra</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Tanggal</label><input type="date" id="tgl"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Branch Office</label><input type="text" id="branch" placeholder="cth: Cabang Sudirman"></div>
+          <div class="form-group"><label>Area</label>
+            <select id="branch-kode">
+              <option value="">— pilih area —</option>
+              <option value="SINTANG1">Sintang 1</option><option value="SINTANG2">Sintang 2</option>
+              <option value="SEKADAU">Sekadau</option><option value="SANGGAU">Sanggau</option>
+              <option value="PONTIANAK">Pontianak Raya</option><option value="MELAWI">Melawi</option>
+              <option value="KAPUASHULU">Kapuas Hulu</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div style="display:flex;gap:10px;">
@@ -779,9 +789,10 @@ body{margin:0;overflow-x:hidden;}
       <div style="display:flex;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap;">
         <button class="sub-btn active" id="log-tab-maintenance" onclick="switchLogTab('maintenance')">🔧 Maintenance</button>
         <button class="sub-btn" id="log-tab-ots" onclick="switchLogTab('ots')">📋 OTS</button>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <input type="date" id="log-filter-tgl" style="padding:7px 10px;border:1.5px solid var(--border2);border-radius:var(--radius-xs);font-size:12px;font-family:inherit;background:var(--surface);" onchange="refreshLogTab()">
           <button class="btn-refresh" onclick="refreshLogTab()">🔄 Refresh</button>
+
         </div>
       </div>
       <!-- LOG MAINTENANCE -->
@@ -1005,7 +1016,7 @@ body{margin:0;overflow-x:hidden;}
       <div class="container">
       <div class="card">
         <div class="card-title"><span class="dot" style="background:#7b1fa2)"></span>Report OTS</div>
-        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
           <select id="ots-filter-bulan" class="input-field" style="flex:1;">
             <option value="">Semua Bulan</option>
             <option>Januari</option><option>Februari</option><option>Maret</option>
@@ -1014,10 +1025,49 @@ body{margin:0;overflow-x:hidden;}
             <option>Oktober</option><option>November</option><option>Desember</option>
           </select>
           <button class="btn-outline" onclick="loadReportOTS(true)">🔄 Refresh</button>
+          <button class="btn-export" onclick="exportOTSExcel()" style="padding:8px 14px;font-size:12px;">📊 Export Excel</button>
         </div>
         <div id="report-ots-content"><div class="no-data">Tekan Refresh untuk load data.</div></div>
       </div>
       </div><!-- end container -->
+    </div>
+
+    <!-- PANE ABSENSI -->
+    <div id="pane-rep-absensi" class="pane">
+      <div class="container">
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:#5b21b6;"></span>Laporan Absensi Bulanan</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div class="form-group">
+              <label>Bulan</label>
+              <select id="absen-filter-bulan" class="input-field">
+                <option>Januari</option><option>Februari</option><option>Maret</option>
+                <option>April</option><option selected>Mei</option><option>Juni</option>
+                <option>Juli</option><option>Agustus</option><option>September</option>
+                <option>Oktober</option><option>November</option><option>Desember</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tahun</label>
+              <input type="number" id="absen-filter-tahun" class="input-field" value="2026" min="2024" max="2030">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>PIC</label>
+            <select id="absen-filter-pic" class="input-field">
+              <option value="">Semua PIC</option>
+              <option>Ridwan</option><option>Abet Nego</option>
+              <option>Goprid Tendo Padagi</option><option>Evan Budiargo</option>
+              <option>Herniumus Chandra</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-primary" style="flex:1;margin-top:0;padding:10px;" onclick="loadAbsensi()">🔍 Tampilkan</button>
+            <button class="btn-export" onclick="exportAbsensi()" style="padding:10px 16px;margin-top:0;">📥 Export Excel</button>
+          </div>
+        </div>
+        <div id="absensi-content"><div class="no-data"><div class="no-data-icon">📋</div>Pilih filter lalu tekan Tampilkan.</div></div>
+      </div>
     </div>
 
     <div id="pane-rep-barang" class="pane">
@@ -1414,16 +1464,31 @@ function selectActType(t){
       if(panel)panel.style.display='none';
     }
   });
+  // Tampilkan kartu identitas hanya untuk HW dan Net
+  const idCard = document.getElementById('act-identitas-card');
+  if(idCard) idCard.style.display = (t==='daily') ? 'none' : 'block';
+  // Pre-fill tanggal daily
+  if(t==='daily'){const dt=document.getElementById('daily-tgl');if(dt&&!dt.value)dt.valueAsDate=new Date();}
+  // Pre-fill tanggal identitas
+  if(t!=='daily'){const tg=document.getElementById('tgl');if(tg&&!tg.value)tg.valueAsDate=new Date();}
 }
 
 function addDaily(){
   const ket=document.getElementById('daily-ket').value.trim();
   if(!ket){showToast('Isi kegiatan terlebih dahulu','info');return;}
-  dailyItems.push({ket,lokasi:document.getElementById('daily-lokasi').value,durasi:document.getElementById('daily-durasi').value,id:Date.now()});
+  const picEl = document.getElementById('daily-pic');
+  const tglEl = document.getElementById('daily-tgl');
+  dailyItems.push({
+    ket,
+    lokasi:document.getElementById('daily-lokasi').value,
+    durasi:'',
+    pic: picEl?.value || '',
+    tgl: tglEl?.value || new Date().toISOString().slice(0,10),
+    id:Date.now()
+  });
   renderDailyList();
   document.getElementById('daily-ket').value='';
   document.getElementById('daily-lokasi').value='';
-  document.getElementById('daily-durasi').value='';
 }
 
 function renderDailyList(){
@@ -1610,7 +1675,7 @@ function switchMenu(menu){
   else if(menu==='log'){var p=document.getElementById('pane-log');if(p)p.classList.add('active');if(typeof loadLogHarian==='function')loadLogHarian();}
   else if(menu==='setting'){var p=document.getElementById('pane-setting');if(p)p.classList.add('active');var ac=document.getElementById('admin-card');if(ac)ac.style.display=currentRole==='manager'?'block':'none';}
   else if(menu==='input'){var subs=['maintenance','ots','pengajuan'];var s=subs.indexOf(currentSub)>=0?currentSub:'maintenance';switchSub(s,'input');}
-  else if(menu==='report'){var subs=['rep-maintenance','rep-ots','rep-barang','rep-pengajuan'];var s=subs.indexOf(currentSub)>=0?currentSub:'rep-maintenance';switchSub(s,'report');}
+  else if(menu==='report'){var subs=['rep-maintenance','rep-ots','rep-barang','rep-pengajuan','rep-absensi'];var s=subs.indexOf(currentSub)>=0?currentSub:'rep-maintenance';switchSub(s,'report');}
 }
 
 
@@ -1618,13 +1683,14 @@ function switchSub(sub,menu){
   currentSub=sub;
   document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('active');});
   var pane=document.getElementById('pane-'+sub);if(pane)pane.classList.add('active');
-  var subT={'maintenance':'Maintenance','ots':'Form OTS','pengajuan':'Form Pengajuan','rep-maintenance':'Report Maintenance','rep-ots':'Report OTS','rep-barang':'Penggunaan Barang','rep-pengajuan':'Pengajuan Barang'};
+  var subT={'maintenance':'Maintenance','ots':'Form OTS','pengajuan':'Form Pengajuan','rep-maintenance':'Report Maintenance','rep-ots':'Report OTS','rep-barang':'Penggunaan Barang','rep-pengajuan':'Pengajuan Barang','rep-absensi':'Absensi'};
   var el=document.getElementById('top-bar-title');if(el&&subT[sub])el.textContent=subT[sub];
   if(sub==='rep-maintenance')loadReportMaintenance();
   if(sub==='rep-ots')loadReportOTS(false);
   if(sub==='rep-pengajuan')loadReportPengajuan();
   if(sub==='rep-barang'){var e=document.getElementById('report-barang-content');if(e)e.innerHTML='<div class="no-data"><div class="no-data-icon">📦</div>Pilih filter lalu tekan Tampilkan.</div>';}
   if(sub==='pengajuan'){var t=document.getElementById('pjn-tgl');if(t&&!t.value)t.valueAsDate=new Date();if(typeof renderPjnItems==='function')renderPjnItems();}
+  if(sub==='rep-absensi'){const b=document.getElementById('absen-filter-bulan');const BN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];if(b)b.value=BN[new Date().getMonth()];}
 }
 
 
@@ -1733,14 +1799,28 @@ function resetForm(){
 
 // ---- SIMPAN & KIRIM ----
 async function simpanDanKirim(){
-  const pic    = document.getElementById('pic').value;
-  const tgl    = document.getElementById('tgl').value;
-  const branch = document.getElementById('branch').value.trim();
-  const branchKode = document.getElementById('branch-kode').value;
+  // Jika hanya daily activity, validasi lebih ringan
+  const onlyDaily = !hwItems.length && !netItems.length && dailyItems.length > 0;
 
-  if(!pic){ showToast('Pilih nama PIC dulu','info'); return; }
-  if(!tgl){ showToast('Pilih tanggal dulu','info'); return; }
-  if(!branch){ showToast('Isi Branch Office dulu','info'); return; }
+  let pic, tgl, branch, branchKode;
+  if(onlyDaily){
+    // Untuk daily, ambil dari item pertama atau dari field daily
+    pic    = document.getElementById('daily-pic')?.value || dailyItems[0]?.pic || '';
+    tgl    = document.getElementById('daily-tgl')?.value || dailyItems[0]?.tgl || '';
+    branch = 'KP';
+    branchKode = '';
+    if(!pic){ showToast('Pilih nama PIC dulu','info'); return; }
+    if(!tgl){ showToast('Pilih tanggal dulu','info'); return; }
+  } else {
+    pic    = document.getElementById('pic').value;
+    tgl    = document.getElementById('tgl').value;
+    branch = document.getElementById('branch').value.trim();
+    branchKode = document.getElementById('branch-kode').value;
+    if(!pic){ showToast('Pilih nama PIC dulu','info'); return; }
+    if(!tgl){ showToast('Pilih tanggal dulu','info'); return; }
+    if(!branch){ showToast('Isi Branch Office dulu','info'); return; }
+  }
+
   if(!hwItems.length && !netItems.length && !dailyItems.length){ showToast('Tambah minimal 1 tiket atau aktivitas dulu','info'); return; }
 
   showOverlay('Menyimpan laporan...');
@@ -1882,11 +1962,12 @@ function switchLogTab(tab){
   const btnO = document.getElementById('log-tab-ots');
   const paneM = document.getElementById('log-pane-maintenance');
   const paneO = document.getElementById('log-pane-ots');
+  const btnExportOTS = document.getElementById('btn-export-ots');
   if(btnM) btnM.classList.toggle('active', tab==='maintenance');
   if(btnO) btnO.classList.toggle('active', tab==='ots');
   if(paneM) paneM.style.display = tab==='maintenance' ? 'block' : 'none';
   if(paneO) paneO.style.display = tab==='ots' ? 'block' : 'none';
-  // Gunakan setTimeout agar async functions sudah fully loaded
+  if(btnExportOTS) btnExportOTS.style.display = tab==='ots' ? '' : 'none';
   if(tab==='maintenance') setTimeout(()=>loadLog(), 0);
   if(tab==='ots') setTimeout(()=>loadLogOTS(), 0);
 }
@@ -1895,6 +1976,90 @@ function refreshLogTab(){
   if(currentLogTab==='maintenance') setTimeout(()=>loadLog(), 0);
   else setTimeout(()=>loadLogOTS(), 0);
 }
+
+// ── Export OTS ke Excel ──────────────────────────────────────────────────────
+async function exportOTSExcel(){
+  const bulan = document.getElementById('ots-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
+  const tahun = new Date().getFullYear();
+  showOverlay('Menyiapkan file Excel OTS...');
+  const tahun = d.getFullYear();
+
+  showOverlay('Menyiapkan file Excel OTS...');
+  try {
+    const json = await fetchGAS({action:'exportOTS', bulan, tahun: String(tahun), pin: currentPin});
+    hideOverlay();
+    if(json.status === 'ok' && json.data?.url){
+      showToast('File siap! Mengunduh...', 'ok');
+      window.open(json.data.url, '_blank');
+    } else {
+      showToast(json.data?.message || 'Gagal export', 'err');
+    }
+  } catch(e){
+    hideOverlay();
+    showToast('Gagal: ' + e.message, 'err');
+  }
+}
+
+// ── Export Absensi ────────────────────────────────────────────────────────────
+async function exportAbsensi(){
+  const bulan = document.getElementById('absen-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
+  const tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
+  const bulan = BULAN[d.getMonth()];
+  showOverlay('Menyusun data absensi dari Sheet...');
+  try {
+    const json = await fetchGAS({action:'generateAbsensi', bulan, tahun, pin: currentPin});
+    hideOverlay();
+    if(json.status !== 'ok' || !json.data?.length){
+      showToast('Tidak ada data absensi untuk periode ini', 'info');
+      return;
+    }
+    // Untuk setiap PIC, buat file Excel via Apps Script
+    const data = json.data;
+    if(data.length === 1){
+      await _downloadAbsensiExcel(data[0], bulan, tahun);
+    } else {
+      // Multi-PIC: tanya pilihan
+      const names = data.map(d=>d.pic).join(', ');
+      showToast(`Ditemukan ${data.length} PIC: ${names}. Mengunduh semua...`, 'info');
+      for(const picData of data){
+        await _downloadAbsensiExcel(picData, bulan, tahun);
+      }
+    }
+  } catch(e){
+    hideOverlay();
+    showToast('Gagal: ' + e.message, 'err');
+  }
+}
+
+async function _downloadAbsensiExcel(picData, bulan, tahun){
+  // Kirim data ke Apps Script untuk generate Excel via Sheets→Drive
+  showOverlay(`Membuat absensi ${picData.pic}...`);
+  try {
+    const fd = new FormData();
+    fd.append('data', JSON.stringify({
+      action: 'saveAbsensiExcel',
+      pic: picData.pic,
+      bulan, tahun,
+      rows: picData.rows,
+      tlCount: picData.tlCount,
+      pin: currentPin
+    }));
+    const res = await fetch(getUrl(), {method:'POST', body:fd});
+    const json = await res.json();
+    hideOverlay();
+    if(json.status === 'ok' && json.url){
+      showToast(`Absensi ${picData.pic} siap!`, 'ok');
+      window.open(json.url, '_blank');
+    } else {
+      showToast('Gagal buat Excel: ' + (json.message||''), 'err');
+    }
+  } catch(e){
+    hideOverlay();
+    showToast('Gagal: ' + e.message, 'err');
+  }
+}
+
+
 
 function formatWIB(str){
   if(!str) return '-';
@@ -4349,6 +4514,7 @@ function renderReportPengajuan(records, bulan){
       <td style="padding:10px 8px;">
         <div style="display:flex;gap:5px;flex-wrap:wrap;">
           <button class="btn-sm-edit" onclick="detailPengajuan('${r.id}')">👁 Detail</button>
+          <button class="btn-sm-edit" style="background:#eff6ff;color:#2563eb;" onclick="editPengajuanReport('${r.id}')">✏️ Edit</button>
           <button class="btn-sm-edit" style="background:#faf5ff;color:#7c3aed;border-color:#e9d5ff;" onclick="exportPengajuanPDF(pengajuanById('${r.id}'))">🖨️ PDF</button>
         </div>
       </td>
@@ -4487,7 +4653,212 @@ async function deleteNota(id, idx){
       if(ci>=0) _pengajuanRecords[ci]={..._pengajuanRecords[ci],notas};
       showToast('Nota dihapus','ok');
       detailPengajuan(id);
-    } else showToast('Gagal','err');
+    
+// ══════════════════════════════════════════════════════════
+//  ABSENSI - Preview di menu
+// ══════════════════════════════════════════════════════════
+async function loadAbsensi(){
+  const bulan = document.getElementById('absen-filter-bulan')?.value || '';
+  const tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
+  const pic   = document.getElementById('absen-filter-pic')?.value || '';
+  const el    = document.getElementById('absensi-content');
+  if(!el) return;
+  el.innerHTML = '<div class="loading-text">⏳ Menyusun data absensi...</div>';
+  try {
+    const json = await fetchGAS({action:'generateAbsensi', bulan, tahun, pic, pin: currentPin});
+    if(json.status !== 'ok' || !json.data?.length){
+      el.innerHTML = '<div class="no-data"><div class="no-data-icon">📋</div>Tidak ada data untuk periode ini.</div>';
+      return;
+    }
+    _absensiData = json.data;
+    renderAbsensiPreview(_absensiData);
+  } catch(e) {
+    el.innerHTML = '<div class="no-data">Gagal koneksi.</div>';
+  }
+}
+
+let _absensiData = [];
+
+function renderAbsensiPreview(dataArr){
+  const el = document.getElementById('absensi-content');
+  if(!el) return;
+
+  const HARI_COLOR = {Sabtu:'#e0f2fe',Minggu:'#fee2e2'};
+
+  const tabs = dataArr.map((picData,i) => `
+    <button class="sub-btn ${i===0?'active':''}" onclick="showAbsensiTab(${i})" id="absen-tab-${i}">${picData.pic}</button>
+  `).join('');
+
+  const panels = dataArr.map((picData,i) => {
+    const rows = picData.rows.map(r => {
+      const isLibur = r.kegiatan === 'Libur';
+      const isTL    = r.status === 'TL';
+      const bg = HARI_COLOR[r.hari] || (isTL ? '#f3e5f5' : '#fff');
+      const kegHuman = _formatKegiatanHuman(r.kegiatan);
+      const tglFmt = r.tgl ? new Date(r.tgl).toLocaleDateString('id-ID',{day:'numeric',month:'short'}) : '';
+      return `<tr style="background:${bg};border-bottom:1px solid var(--border);">
+        <td style="padding:6px 8px;font-size:12px;color:var(--text2);white-space:nowrap;">${r.hari}</td>
+        <td style="padding:6px 8px;font-size:12px;color:var(--text2);white-space:nowrap;">${tglFmt}</td>
+        <td style="padding:6px 8px;font-size:12px;${isLibur?'color:var(--text3);font-style:italic;':''}">${isLibur?'Libur':kegHuman}</td>
+        <td style="padding:6px 8px;font-size:12px;text-align:center;">${r.lokasi||''}</td>
+        <td style="padding:6px 8px;font-size:12px;text-align:center;">${isTL?'<span class="badge badge-purple">TL</span>':''}</td>
+      </tr>`;
+    }).join('');
+    return `<div id="absen-panel-${i}" style="${i===0?'':'display:none;'}">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;"><b>${picData.pic}</b> — ${picData.bulan} ${picData.tahun} · TL: ${picData.tlCount} hari</div>
+      <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:var(--surface3);">
+          <th style="padding:7px 8px;text-align:left;">Hari</th>
+          <th style="padding:7px 8px;text-align:left;">Tgl</th>
+          <th style="padding:7px 8px;text-align:left;">Kegiatan</th>
+          <th style="padding:7px 8px;text-align:center;">Lokasi PIC</th>
+          <th style="padding:7px 8px;text-align:center;">Status</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card" style="padding:12px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${tabs}</div>
+      ${panels}
+    </div>`;
+}
+
+function showAbsensiTab(idx){
+  document.querySelectorAll('[id^="absen-tab-"]').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('[id^="absen-panel-"]').forEach(p=>p.style.display='none');
+  const tab = document.getElementById('absen-tab-'+idx);
+  const panel = document.getElementById('absen-panel-'+idx);
+  if(tab) tab.classList.add('active');
+  if(panel) panel.style.display='block';
+}
+
+function _formatKegiatanHuman(raw){
+  if(!raw) return '';
+  // Hapus prefix teknis [HW] [NET] → ganti dengan deskripsi humanis
+  return raw
+    .replace(/\[HW\]\s*/g,'')
+    .replace(/\[NET\]\s*/g,'')
+    .replace(/OTS ke\s+/gi,'Kunjungan OTS ke ')
+    .replace(/→/g,'-')
+    .replace(/;\s*/g,', ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+// ══════════════════════════════════════════════════════════
+//  PENGAJUAN BARANG - Edit inline
+// ══════════════════════════════════════════════════════════
+let _editingPjnId = null;
+
+function editPengajuanReport(id){
+  const r = _pengajuanRecords?.find(x=>x.id===id);
+  if(!r){showToast('Data tidak ditemukan','info');return;}
+  if(typeof r.items==='string') try{r.items=JSON.parse(r.items);}catch(e){r.items=[];}
+  if(typeof r.notas==='string')  try{r.notas=JSON.parse(r.notas);}catch(e){r.notas=[];}
+  _editingPjnId = id;
+
+  const itemRows = (r.items||[]).map((b,i)=>`
+    <tr id="pjn-edit-row-${i}">
+      <td style="padding:4px;"><input class="pjn-input" value="${b.nama||''}" id="pe-nama-${i}" placeholder="Nama Barang"></td>
+      <td style="padding:4px;"><input class="pjn-input" value="${b.type||''}" id="pe-type-${i}" placeholder="Type"></td>
+      <td style="padding:4px;"><input class="pjn-input" value="${b.brand||''}" id="pe-brand-${i}" placeholder="Brand"></td>
+      <td style="padding:4px;"><input class="pjn-input" value="${b.jumlah||''}" id="pe-jumlah-${i}" placeholder="Jumlah"></td>
+      <td style="padding:4px;text-align:center;"><button onclick="removePjnEditRow(${i})" class="btn-danger-sm" title="Hapus">✕</button></td>
+    </tr>`).join('');
+
+  document.getElementById('modal-ots-title').textContent = '✏️ Edit Pengajuan — '+r.tempat;
+  document.getElementById('modal-ots-body').innerHTML = `
+    <div style="background:var(--surface3);padding:12px;border-radius:var(--radius-sm);margin-bottom:14px;">
+      <div class="form-row">
+        <div class="form-group"><label>Tempat</label><input type="text" id="pe-tempat" class="input-field" value="${r.tempat||''}"></div>
+        <div class="form-group"><label>Tanggal</label><input type="date" id="pe-tgl" class="input-field" value="${r.tgl||''}"></div>
+      </div>
+      <div class="form-group"><label>Keterangan</label><input type="text" id="pe-ket" class="input-field" value="${r.ket||''}"></div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:8px;">Daftar Barang</div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;" id="pjn-edit-table">
+      <thead><tr style="background:var(--surface3);">
+        <th style="padding:7px 8px;text-align:left;">Nama</th>
+        <th style="padding:7px 8px;text-align:left;">Type</th>
+        <th style="padding:7px 8px;text-align:left;">Brand</th>
+        <th style="padding:7px 8px;text-align:left;">Jumlah</th>
+        <th style="padding:7px 8px;"></th>
+      </tr></thead>
+      <tbody id="pjn-edit-tbody">${itemRows}</tbody>
+    </table>
+    </div>
+    <button onclick="addPjnEditRow()" class="btn-outline" style="margin-top:8px;width:100%;">+ Tambah Baris</button>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="savePengajuanEdit('${id}')" class="btn-primary" style="flex:1;margin-top:0;padding:10px;">💾 Simpan Perubahan</button>
+      <button onclick="closeOTSModal()" style="padding:10px 20px;background:var(--surface3);color:var(--text2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">✕ Batal</button>
+    </div>`;
+  document.getElementById('ots-modal').classList.add('show');
+}
+
+let _pjnEditRowCount = 0;
+function addPjnEditRow(){
+  const tbody = document.getElementById('pjn-edit-tbody');
+  if(!tbody) return;
+  const i = tbody.querySelectorAll('tr').length;
+  const tr = document.createElement('tr');
+  tr.id = 'pjn-edit-row-'+i;
+  tr.innerHTML = `
+    <td style="padding:4px;"><input class="pjn-input" id="pe-nama-${i}" placeholder="Nama Barang"></td>
+    <td style="padding:4px;"><input class="pjn-input" id="pe-type-${i}" placeholder="Type"></td>
+    <td style="padding:4px;"><input class="pjn-input" id="pe-brand-${i}" placeholder="Brand"></td>
+    <td style="padding:4px;"><input class="pjn-input" id="pe-jumlah-${i}" placeholder="Jumlah"></td>
+    <td style="padding:4px;text-align:center;"><button onclick="removePjnEditRow(${i})" class="btn-danger-sm">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function removePjnEditRow(i){
+  const row = document.getElementById('pjn-edit-row-'+i);
+  if(row) row.remove();
+}
+
+async function savePengajuanEdit(id){
+  const tempat = document.getElementById('pe-tempat')?.value?.trim();
+  const tgl    = document.getElementById('pe-tgl')?.value;
+  const ket    = document.getElementById('pe-ket')?.value?.trim();
+  const tbody  = document.getElementById('pjn-edit-tbody');
+  if(!tempat){showToast('Isi Tempat/Lokasi','info');return;}
+
+  const items = [];
+  let no = 1;
+  tbody.querySelectorAll('tr').forEach(row => {
+    const idx = row.id.replace('pjn-edit-row-','');
+    const nama   = document.getElementById('pe-nama-'+idx)?.value?.trim();
+    const type   = document.getElementById('pe-type-'+idx)?.value?.trim();
+    const brand  = document.getElementById('pe-brand-'+idx)?.value?.trim();
+    const jumlah = document.getElementById('pe-jumlah-'+idx)?.value?.trim();
+    if(nama) items.push({no:no++, nama, type, brand, jumlah});
+  });
+
+  const r = _pengajuanRecords?.find(x=>x.id===id)||{};
+  showOverlay('Menyimpan perubahan...');
+  try {
+    const payload = {action:'updatePengajuanFull', pin:currentPin, id, tempat, tgl, ket, items, notas:r.notas||[]};
+    const fd = new FormData();
+    fd.append('data', JSON.stringify(payload));
+    const res  = await fetch(getUrl(), {method:'POST', body:fd});
+    const json = await res.json();
+    hideOverlay();
+    if(json.status === 'ok'){
+      // Update cache
+      const ci = _pengajuanRecords.findIndex(x=>x.id===id);
+      if(ci>=0) _pengajuanRecords[ci] = {..._pengajuanRecords[ci], tempat, tgl, ket, items};
+      showToast('Pengajuan berhasil diupdate!','ok');
+      closeOTSModal();
+      renderReportPengajuan(_pengajuanRecords,'');
+    } else {
+      showToast('Gagal: '+(json.message||'error'),'err');
+    }
   } catch(e){hideOverlay();showToast('Gagal: '+e.message,'err');}
 }
 </script>
