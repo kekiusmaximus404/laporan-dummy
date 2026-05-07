@@ -685,8 +685,25 @@ body{margin:0;overflow-x:hidden;}
         </div>
       </div>
 
+      <!-- ── ACTIVITY TYPE SELECTOR ── -->
       <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--blue)"></span>Perbaikan Hardware <span style="font-size:10px;color:var(--text3);font-weight:400;text-transform:none;">(isi jika ada)</span></div>
+        <div class="card-title">Jenis Aktivitas</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:0;">
+          <button id="act-tab-hw" onclick="selectActType('hw')" style="padding:10px 6px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <span style="font-size:18px;">🖥️</span>Perbaikan Hardware
+          </button>
+          <button id="act-tab-net" onclick="selectActType('net')" style="padding:10px 6px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <span style="font-size:18px;">🌐</span>Perbaikan Jaringan
+          </button>
+          <button id="act-tab-daily" onclick="selectActType('daily')" style="padding:10px 6px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <span style="font-size:18px;">📓</span>Daily Activity
+          </button>
+        </div>
+      </div>
+
+      <!-- ── HW PANEL ── -->
+      <div id="act-panel-hw" class="card" style="display:none;">
+        <div class="card-title"><span class="dot" style="background:var(--accent)"></span>Perbaikan Hardware</div>
         <div class="form-row">
           <div class="form-group"><label>Kategori</label>
             <select id="hw-kat" onchange="updateHwSub()">
@@ -707,8 +724,9 @@ body{margin:0;overflow-x:hidden;}
         <div id="hw-list"></div>
       </div>
 
-      <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--green)"></span>Perbaikan Jaringan <span style="font-size:10px;color:var(--text3);font-weight:400;text-transform:none;">(isi jika ada)</span></div>
+      <!-- ── NET PANEL ── -->
+      <div id="act-panel-net" class="card" style="display:none;">
+        <div class="card-title"><span class="dot" style="background:var(--green)"></span>Perbaikan Jaringan</div>
         <div class="form-row">
           <div class="form-group"><label>Kategori</label>
             <select id="net-kat" onchange="updateNetSub()">
@@ -729,6 +747,18 @@ body{margin:0;overflow-x:hidden;}
         <div class="form-row-1"><div class="form-group"><label>Keterangan</label><textarea id="net-ket" placeholder="Deskripsikan perbaikan jaringan..."></textarea></div></div>
         <button class="btn-outline" onclick="addNet()">+ Tambah tiket jaringan</button>
         <div id="net-list"></div>
+      </div>
+
+      <!-- ── DAILY PANEL ── -->
+      <div id="act-panel-daily" class="card" style="display:none;">
+        <div class="card-title"><span class="dot" style="background:var(--warn)"></span>Daily Activity</div>
+        <div class="form-row-1"><div class="form-group"><label>Kegiatan yang Dilakukan</label><textarea id="daily-ket" placeholder="Ceritakan kegiatan di luar perbaikan hardware/jaringan..." style="height:90px;"></textarea></div></div>
+        <div class="form-row">
+          <div class="form-group"><label>Lokasi / Unit</label><input type="text" id="daily-lokasi" placeholder="cth: Ruang Server, Kantor Pusat"></div>
+          <div class="form-group"><label>Durasi (opsional)</label><input type="text" id="daily-durasi" placeholder="cth: 2 jam"></div>
+        </div>
+        <button class="btn-outline" onclick="addDaily()">+ Tambah aktivitas</button>
+        <div id="daily-list"></div>
       </div>
 
       <div style="display:flex;gap:10px;">
@@ -1370,7 +1400,50 @@ const BULAN_NAMES=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agu
 
 let currentRole = null;
 let currentPin  = null;
-let hwItems=[], netItems=[];
+let hwItems=[], netItems=[], dailyItems=[];
+
+function selectActType(t){
+  ['hw','net','daily'].forEach(x=>{
+    const tab=document.getElementById('act-tab-'+x);
+    const panel=document.getElementById('act-panel-'+x);
+    if(x===t){
+      tab.style.borderColor='var(--accent)';tab.style.color='var(--accent)';tab.style.background='rgba(59,130,246,0.06)';
+      if(panel)panel.style.display='block';
+    } else {
+      tab.style.borderColor='var(--border2)';tab.style.color='var(--text2)';tab.style.background='var(--surface2)';
+      if(panel)panel.style.display='none';
+    }
+  });
+}
+
+function addDaily(){
+  const ket=document.getElementById('daily-ket').value.trim();
+  if(!ket){showToast('Isi kegiatan terlebih dahulu','info');return;}
+  dailyItems.push({ket,lokasi:document.getElementById('daily-lokasi').value,durasi:document.getElementById('daily-durasi').value,id:Date.now()});
+  renderDailyList();
+  document.getElementById('daily-ket').value='';
+  document.getElementById('daily-lokasi').value='';
+  document.getElementById('daily-durasi').value='';
+}
+
+function renderDailyList(){
+  const el=document.getElementById('daily-list');
+  if(!el)return;
+  el.innerHTML=dailyItems.map((d,i)=>`
+    <div class="ticket daily" style="border-left-color:var(--warn)">
+      <div class="ticket-header">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${d.ket.substring(0,70)}${d.ket.length>70?'…':''}</div>
+          <div class="ticket-meta">${d.lokasi||'—'}${d.durasi?' · '+d.durasi:''}</div>
+        </div>
+        <div class="ticket-actions">
+          <button class="btn-sm-del" onclick="removeDailyItem(${i})">✕</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function removeDailyItem(i){dailyItems.splice(i,1);renderDailyList();}
 let sheetsData = [];
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfswydRdqrfGD07wKoSI31sTboOwNqHCYIKB3ZUHcHMIORIjb0jl5Fg-S1ebzuoB1X/exec';
 function getUrl(){ return localStorage.getItem('hn_script_url') || SCRIPT_URL; }
@@ -1635,11 +1708,12 @@ function resetForm(){
   const kodeEl = document.getElementById('branch-kode');
   if(kodeEl) kodeEl.value = '';
   // Reset tiket
-  hwItems = []; netItems = [];
+  hwItems = []; netItems = []; dailyItems=[];
   renderTemp('hw-list', hwItems, 'hw');
   renderTemp('net-list', netItems, 'net');
-  // Reset field input hw & net
-  ['hw-kat','hw-sub','hw-lokasi','hw-ket','net-kat','net-sub','net-lokasi','net-ket'].forEach(id=>{
+  renderDailyList();
+  // Reset field input hw & net & daily
+  ['hw-kat','hw-sub','hw-lokasi','hw-ket','net-kat','net-sub','net-lokasi','net-ket','daily-ket','daily-lokasi','daily-durasi'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.value = '';
   });
@@ -1667,7 +1741,7 @@ async function simpanDanKirim(){
   if(!pic){ showToast('Pilih nama PIC dulu','info'); return; }
   if(!tgl){ showToast('Pilih tanggal dulu','info'); return; }
   if(!branch){ showToast('Isi Branch Office dulu','info'); return; }
-  if(!hwItems.length && !netItems.length){ showToast('Tambah minimal 1 tiket dulu','info'); return; }
+  if(!hwItems.length && !netItems.length && !dailyItems.length){ showToast('Tambah minimal 1 tiket atau aktivitas dulu','info'); return; }
 
   showOverlay('Menyimpan laporan...');
 
@@ -1705,6 +1779,7 @@ async function simpanDanKirim(){
     branchKode,
     hw: finalHw,
     net: finalNet,
+    daily: dailyItems,
     pin: currentPin
   };
 
@@ -1773,9 +1848,10 @@ function renderLog(entries){
     return;
   }
   el.innerHTML=entries.map(e=>{
-    const totalTiket = (e.hw||[]).length + (e.net||[]).length;
+    const totalTiket = (e.hw||[]).length + (e.net||[]).length + (e.daily||[]).length;
     const hwBadges = (e.hw||[]).map(h=>`<span class="badge badge-hw">🔧 ${h.kat}</span>`).join('');
     const netBadges = (e.net||[]).map(n=>`<span class="badge badge-net">🌐 ${n.kat}</span>`).join('');
+    const dailyBadge = (e.daily||[]).length ? `<span class="badge" style="background:#fef3c7;color:#92400e;">📓 Daily ×${e.daily.length}</span>` : '';
     return `<div class="log-entry" id="entry-${e.id}">
       <div class="log-header">
         <div>
@@ -1791,7 +1867,7 @@ function renderLog(entries){
         </div>
       </div>
       <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-        ${hwBadges}${netBadges}
+        ${hwBadges}${netBadges}${dailyBadge}
       </div>
       <div style="margin-top:6px;font-size:11px;color:var(--text3);font-style:italic;">
         ${totalTiket} tiket — tekan Detail untuk lihat selengkapnya
