@@ -5638,104 +5638,104 @@ function exportBerkasPDF(id) {
   var b = (_berkasAll||[]).find(function(x){ return x.id === id; });
   if (!b) { showToast('Data tidak ditemukan','info'); return; }
 
-  var tglFmt = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
-  var icon   = typeof _getFileIcon === 'function' ? _getFileIcon(b.namaFile) : '📄';
+  var logoSrc = typeof LOGO_KOP_B64 !== 'undefined' ? LOGO_KOP_B64 : '';
+  var tglFmt  = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  var icon    = typeof _getFileIcon === 'function' ? _getFileIcon(b.namaFile) : '\uD83D\uDCC4';
 
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
-  html += '<title>Arsip Berkas — '+_esc(b.namaFile)+'</title>';
-  html += '<style>';
-  html += '*{box-sizing:border-box;margin:0;padding:0;}';
-  html += 'body{font-family:Arial,sans-serif;font-size:12px;color:#111;background:#fff;padding:28px 32px;}';
+  var hp = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
+  hp += '<title>Arsip Berkas</title><style>';
+  hp += '*{box-sizing:border-box;margin:0;padding:0;}';
+  hp += 'body{font-family:Arial,sans-serif;font-size:11pt;color:#111;background:#fff;padding:20mm 25mm;}';
 
-  // watermark
-  html += '@keyframes none{}';
-  html += '.watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(45deg);font-size:20px;font-weight:900;color:rgba(30,58,95,0.07);white-space:nowrap;text-align:center;pointer-events:none;z-index:0;line-height:1.8;}';
+  /* ── Watermark diagonal ── */
+  hp += '.wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(45deg);';
+  hp += 'font-family:Arial,sans-serif;font-size:22pt;font-weight:900;';
+  hp += 'color:rgba(30,58,95,0.07);white-space:nowrap;text-align:center;';
+  hp += 'pointer-events:none;z-index:0;line-height:2;}';
 
-  // KOP
-  html += '.kop-wrap{border-bottom:4px solid #1e3a5f;padding-bottom:10px;margin-bottom:4px;display:flex;align-items:center;gap:14px;position:relative;z-index:1;}';
-  html += '.kop-emblem{width:56px;height:56px;border-radius:50%;border:3px solid #8B0000;display:flex;align-items:center;justify-content:center;background:#fff;flex-shrink:0;}';
-  html += '.kop-emblem-inner{width:44px;height:44px;border-radius:50%;background:#8B0000;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:800;text-align:center;line-height:1.2;}';
-  html += '.kop-center{flex:1;text-align:center;}';
-  html += '.kop-center h1{font-size:18px;font-weight:900;color:#1e3a5f;letter-spacing:1px;}';
-  html += '.kop-center p{font-size:7.5px;color:#333;line-height:1.6;}';
-  html += '.kop-logo{font-size:13px;font-weight:900;text-align:right;line-height:1.3;}';
-  html += '.kop-logo .kl{color:#1e3a5f;}.kop-logo .km{color:#cc0000;}';
-  html += '.kop-logo .sub{font-size:6.5px;color:#555;letter-spacing:3px;}';
-  html += '.red-line{height:4px;background:#cc0000;margin-bottom:18px;}';
+  /* ── KOP ── */
+  hp += '.kop{width:100%;border-bottom:3pt solid #1e3a5f;margin-bottom:2pt;display:flex;align-items:center;gap:14px;position:relative;z-index:1;}';
+  hp += '.kop img{height:58px;width:auto;}';
+  hp += '.kop-mid{flex:1;text-align:center;}';
+  hp += '.kop-mid h1{font-size:16pt;font-weight:900;color:#1e3a5f;letter-spacing:1px;line-height:1.2;}';
+  hp += '.kop-mid p{font-size:7pt;color:#333;line-height:1.5;}';
+  hp += '.kop-right{text-align:right;line-height:1.3;}';
+  hp += '.kop-right .kl{font-size:13pt;font-weight:900;color:#1e3a5f;}';
+  hp += '.kop-right .km{font-size:13pt;font-weight:900;color:#cc0000;}';
+  hp += '.kop-right .msub{font-size:6pt;color:#555;letter-spacing:3px;}';
+  hp += '.redline{height:3pt;background:#cc0000;margin-bottom:16px;}';
 
-  // body
-  html += 'h2.doc-title{text-align:center;font-size:14px;font-weight:900;text-decoration:underline;margin-bottom:18px;color:#1e3a5f;}';
-  html += '.info-table{width:100%;border-collapse:collapse;margin-bottom:18px;}';
-  html += '.info-table td{padding:7px 10px;border:1px solid #d1d5db;font-size:12px;}';
-  html += '.info-table td:first-child{width:35%;font-weight:700;background:#f9fafb;color:#374151;}';
-  html += '.links-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:12px;margin-bottom:18px;}';
-  html += '.links-box a{display:block;font-size:11px;color:#1d4ed8;word-break:break-all;margin-bottom:4px;}';
-  html += '.footer-doc{margin-top:28px;border-top:1px solid #e5e7eb;padding-top:8px;font-size:9px;color:#9ca3af;text-align:center;font-style:italic;}';
-  html += '.values{margin-top:16px;font-style:italic;font-size:7.5px;color:#1e3a5f;border-top:1px solid #1e3a5f;padding-top:6px;line-height:1.6;}';
-  html += '.no-print{margin-top:24px;text-align:center;}';
-  html += '@media print{.no-print{display:none!important}.watermark{position:fixed!important;}}';
-  html += '</style></head><body>';
+  /* ── Body ── */
+  hp += 'h2.title{text-align:center;font-size:13pt;font-weight:900;text-decoration:underline;margin-bottom:16px;color:#1e3a5f;}';
+  hp += '.itbl{width:100%;border-collapse:collapse;margin-bottom:16px;}';
+  hp += '.itbl td{padding:7px 10px;border:1px solid #d1d5db;font-size:11pt;}';
+  hp += '.itbl td.lbl{width:34%;font-weight:700;background:#f9fafb;color:#374151;}';
+  hp += '.lnk{background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:10px 12px;margin-bottom:14px;}';
+  hp += '.lnk a{display:block;font-size:9pt;color:#1d4ed8;word-break:break-all;margin-top:4px;}';
+  hp += '.ftr{margin-top:24px;border-top:1px solid #e5e7eb;padding-top:8px;font-size:8pt;color:#9ca3af;text-align:center;font-style:italic;}';
+  hp += '.vals{margin-top:10px;font-style:italic;font-size:7pt;color:#1e3a5f;border-top:1pt solid #1e3a5f;padding-top:6px;line-height:1.6;}';
+  hp += '.nopr{margin-top:24px;text-align:center;}';
+  hp += '@media print{.nopr{display:none!important}}';
+  hp += '</style></head><body>';
 
-  // Watermark
-  html += '<div class="watermark">Diterbitkan oleh:<br>Departemen Teknologi Informasi<br>CU Keling Kumang</div>';
+  /* Watermark */
+  hp += '<div class="wm">Diterbitkan oleh:<br>Departemen Teknologi Informasi<br>CU Keling Kumang</div>';
 
-  // KOP SURAT
-  html += '<div class="kop-wrap">';
-  html += '<div class="kop-emblem"><div class="kop-emblem-inner">CU<br>KK</div></div>';
-  html += '<div class="kop-center">';
-  html += '<h1>CU KELING KUMANG</h1>';
-  html += '<p>Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau<br>';
-  html += 'Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513<br>';
-  html += 'Kabupaten Sekadau, Kalimantan Barat, Indonesia<br>';
-  html += 'E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</p>';
-  html += '</div>';
-  html += '<div class="kop-logo"><span class="kl">Keling</span><br><span class="km">Kumang</span><br><div class="sub">Member-TBL-Entrepreneur</div></div>';
-  html += '</div>';
-  html += '<div class="red-line"></div>';
+  /* KOP SURAT */
+  hp += '<div class="kop">';
+  if(logoSrc) hp += '<img src="'+logoSrc+'" alt="Logo">';
+  hp += '<div class="kop-mid"><h1>CU KELING KUMANG</h1>';
+  hp += '<p>Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau<br>';
+  hp += 'Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513<br>';
+  hp += 'Kabupaten Sekadau, Kalimantan Barat, Indonesia<br>';
+  hp += 'E-mail: invictus93@cukelingkumang.com; Website: www.cukelingkumang.com<br>';
+  hp += 'Telp./WA : (+628)115711132</p></div>';
+  hp += '<div class="kop-right"><span class="kl">Keling</span><br><span class="km">Kumang</span><br><div class="msub">Member-TBL-Entrepreneur</div></div>';
+  hp += '</div>';
+  hp += '<div class="redline"></div>';
 
-  // TITLE
-  html += '<h2 class="doc-title">Dokumen Arsip Digital — ITD Upload</h2>';
+  /* Judul */
+  hp += '<h2 class="title">Dokumen Arsip Digital — IT Departemen</h2>';
 
-  // INFO TABLE
-  html += '<table class="info-table">';
+  /* Info Table */
+  hp += '<table class="itbl">';
   var rows = [
-    ['ID Berkas', _esc(b.id||'-')],
-    ['Judul / Kategori', _esc(b.title||'-')],
-    ['Nama File', icon+' '+_esc(b.namaFile||'-')],
-    ['Tipe File', _esc((b.tipe||'-').toUpperCase())],
-    ['Ukuran', (b.sizeKB||0)+' KB'],
-    ['Folder', _esc(b.folder||'-')],
-    ['Diupload Oleh', _esc(b.uploader||'-')],
-    ['Waktu Upload', _esc(b.waktu||'-')],
-    ['Dicetak', tglFmt],
+    ['ID Berkas',       _esc(b.id||'-')],
+    ['Judul / Kategori',_esc(b.title||'-')],
+    ['Nama File',       icon+' '+_esc(b.namaFile||'-')],
+    ['Tipe File',       _esc((b.tipe||'-').toUpperCase())],
+    ['Ukuran',          (b.sizeKB||0)+' KB'],
+    ['Folder',          _esc(b.folder||'-')],
+    ['Diupload Oleh',   _esc(b.uploader||'-')],
+    ['Waktu Upload',    _esc(b.waktu||'-')],
+    ['Dicetak Tanggal', tglFmt],
   ];
   rows.forEach(function(r){
-    html += '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';
+    hp += '<tr><td class="lbl">'+r[0]+'</td><td>'+r[1]+'</td></tr>';
   });
-  html += '</table>';
+  hp += '</table>';
 
-  // LINKS
-  html += '<div class="links-box"><strong style="font-size:12px;color:#1e3a5f;">🔗 Akses File:</strong><br>';
-  if(b.fileUrl&&b.fileUrl.length>5) html += '<a href="'+b.fileUrl+'">📄 File Asli: '+b.fileUrl+'</a>';
-  if(b.pdfUrl&&b.pdfUrl.length>5)  html += '<a href="'+b.pdfUrl+'">📕 Versi PDF: '+b.pdfUrl+'</a>';
-  html += '</div>';
+  /* Links */
+  hp += '<div class="lnk"><strong style="font-size:10pt;color:#1e3a5f;">\uD83D\uDD17 Akses File:</strong>';
+  if(b.fileUrl&&b.fileUrl.length>5) hp += '<a href="'+b.fileUrl+'">\uD83D\uDCC4 File Asli: '+b.fileUrl+'</a>';
+  if(b.pdfUrl&&b.pdfUrl.length>5)  hp += '<a href="'+b.pdfUrl+'">\uD83D\uDCD5 Versi PDF: '+b.pdfUrl+'</a>';
+  hp += '</div>';
 
-  // FOOTER
-  html += '<div class="footer-doc">Dokumen ini digenerate otomatis oleh Sistem Informasi IT Departemen H&N — CU Keling Kumang</div>';
+  /* Footer */
+  hp += '<div class="ftr">Dokumen ini digenerate otomatis oleh Sistem Informasi IT Departemen H&amp;N &mdash; CU Keling Kumang</div>';
+  hp += '<div class="vals">';
+  hp += 'Shared Values: Integrity, Network, Value Creation, Innovation, Credibility, Togetherness, Unity, Speed<br>';
+  hp += 'Visi: Menjadi Credit Union Pilihan Utama Masyarakat di Kalimantan<br>';
+  hp += 'Misi: Melayani Anggota di Kalimantan dengan Menyediakan Pelayanan Keuangan yang Bertanggungjawab dan Berkelanjutan untuk Meningkatkan Standar Hidup dan Kebahagiaan</div>';
 
-  // Footer values
-  html += '<div class="values">Shared Values: Integrity, Network, Value Creation, Innovation, Credibility, Togetherness, Unity, Speed<br>';
-  html += 'Visi: Menjadi Credit Union Pilihan Utama Masyarakat di Kalimantan<br>';
-  html += 'Misi: Melayani Anggota di Kalimantan dengan Menyediakan Pelayanan Keuangan yang Bertanggungjawab dan Berkelanjutan untuk Meningkatkan Standar Hidup dan Kebahagiaan</div>';
-
-  html += '<div class="no-print"><button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🖨️ Print / Simpan PDF</button></div>';
-  html += '</body></html>';
+  hp += '<div class="nopr"><button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">\uD83D\uDDB8 Print / Simpan PDF</button></div>';
+  hp += '</body></html>';
 
   var win = window.open('','_blank');
-  if(!win){ showToast('Popup diblokir browser. Izinkan popup.','info'); return; }
-  win.document.write(html);
+  if(!win){ showToast('Popup diblokir browser. Izinkan popup dulu.','info'); return; }
+  win.document.write(hp);
   win.document.close();
-  setTimeout(function(){ win.print(); }, 800);
+  setTimeout(function(){ win.print(); }, 600);
 }
 async function _loadMgrDashboard(){
   var body = document.getElementById('mgr-dash-body');
@@ -6105,8 +6105,10 @@ async function saveMenuConfig(){
   if(!u) return;
   var cfg = {};
   PIC_MENU_ITEMS.forEach(function(item){
+    if(item.isSection) return;
     var cb = document.getElementById('mcfg-'+item.id);
     if(cb) cfg[item.id] = cb.checked;
+    // Juga hide/show section labels berdasarkan item di section tsb
   });
   showOverlay('Menyimpan konfigurasi...');
   try {
@@ -6128,11 +6130,19 @@ async function saveMenuConfig(){
 function _applyMenuConfig(cfg){
   if(!cfg) return;
   PIC_MENU_ITEMS.forEach(function(item){
+    if(item.isSection) return;
     var el = document.getElementById(item.id);
     if(!el) return;
-    if(cfg[item.id] === false) el.style.display = 'none';
-    else el.style.display = '';
+    el.style.display = (cfg[item.id] === false) ? 'none' : '';
   });
+  // Hide section label 'Log & Laporan' jika semua isinya hidden
+  var logItems = ['sb-btn-rep-maintenance','sb-btn-rep-ots','sb-btn-rep-barang','sb-btn-rep-pengajuan','sb-btn-rep-absensi','mbtn-log'];
+  var anyLogVis = logItems.some(function(id){ return cfg[id] !== false; });
+  var secLog = document.getElementById('sb-sec-laporan');
+  if(secLog) secLog.style.display = anyLogVis ? '' : 'none';
+  // Hide section label 'Berkas & Upload' jika upload hidden
+  var secUp = document.getElementById('sb-sec-upload-label');
+  if(secUp) secUp.style.display = (cfg['sb-btn-upload'] === false) ? 'none' : '';
 }
 
 // ════════════════════════════════════════════════════════════
