@@ -568,11 +568,11 @@ body{margin:0;overflow-x:hidden;}
         <span class="sb-label">Beranda</span>
       </button>
       <div class="sb-sec">Input</div>
-      <button class="sb-item" onclick="currentMenu='input';switchSub('maintenance','input');setSbActive(this)">
+      <button id="sb-btn-maintenance" class="sb-item" onclick="currentMenu='input';switchSub('maintenance','input');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
         <span class="sb-label">Maintenance</span>
       </button>
-      <button class="sb-item" onclick="currentMenu='input';switchSub('ots','input');setSbActive(this)">
+      <button id="sb-btn-ots" class="sb-item" onclick="currentMenu='input';switchSub('ots','input');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         <span class="sb-label">Form OTS</span>
       </button>
@@ -656,10 +656,16 @@ body{margin:0;overflow-x:hidden;}
     <!-- HOME DASHBOARD -->
     <div id="pane-home" class="pane">
       <!-- Manager: splash -->
-      <div id="home-manager" style="min-height:calc(100vh - 54px);background:linear-gradient(135deg,#1e3a5f 0%,#0f2a47 100%);display:flex;align-items:center;justify-content:center;">
-        <div style="text-align:center;color:rgba(255,255,255,0.12);">
-          <div style="font-size:80px;font-weight:800;letter-spacing:-4px;line-height:1;">HN</div>
-          <div style="font-size:14px;letter-spacing:6px;text-transform:uppercase;margin-top:8px;">IT Departemen</div>
+      <div id="home-manager" style="min-height:calc(100vh - 54px);background:var(--bg);overflow-y:auto;">
+        <div style="background:linear-gradient(135deg,#1e3a5f 0%,#0f2a47 100%);padding:24px 20px 20px;color:#fff;">
+          <div style="max-width:900px;margin:0 auto;">
+            <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:0.6;margin-bottom:4px;">IT Departemen H&N</div>
+            <div style="font-size:22px;font-weight:800;letter-spacing:-0.5px;">Dashboard Manager</div>
+            <div id="mgr-dash-date" style="font-size:12px;opacity:0.7;margin-top:4px;"></div>
+          </div>
+        </div>
+        <div style="max-width:900px;margin:0 auto;padding:16px 12px 40px;" id="mgr-dash-body">
+          <div style="text-align:center;padding:40px;color:var(--text3);">⏳ Memuat dashboard...</div>
         </div>
       </div>
       <!-- PIC: personal dashboard -->
@@ -1258,21 +1264,37 @@ body{margin:0;overflow-x:hidden;}
         </div>
       </div>
 
+        <!-- ADMIN: Manajemen User -->
         <div class="card" id="admin-card" style="display:none;">
-          <div class="card-title" style="cursor:pointer;" onclick="toggleAdminSection()">
-            <span class="dot" style="background:#1e3a5f;"></span>
-            <span>Administrator — Manajemen User</span>
-            <span id="admin-toggle-icon" style="margin-left:auto;font-size:12px;color:var(--text2);">▼</span>
+          <div class="card-title"><span class="dot" style="background:#1e3a5f;"></span>Manajemen User PIC</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:14px;">Kelola akun PIC, PIN, status aktif, dan menu yang tampil.</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <button class="btn-primary" style="margin-top:0;padding:8px 16px;font-size:12px;" onclick="loadAdminUsers()">🔄 Refresh Data</button>
+            <button class="btn-outline" style="padding:8px 16px;font-size:12px;" onclick="openAddUser()">➕ Tambah PIC</button>
           </div>
-          <div id="admin-content-wrap">
-            <div id="admin-content" style="margin-top:12px;"><div class="no-data" style="padding:20px;">Klik untuk memuat...</div></div>
-          </div>
+          <div id="admin-content" style="margin-top:4px;"><div class="no-data" style="padding:20px;">⏳ Memuat...</div></div>
         </div>
 
+        <!-- Ubah Password -->
         <div class="card">
-          <div class="card-title"><span class="dot" style="background:#7c3aed;"></span>Ubah Password Saya</div>
-          <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Ubah PIN login Anda sendiri.</div>
-          <button class="btn-primary" style="margin-top:0;" onclick="openChangePwd()">🔑 Ubah Password</button>
+          <div class="card-title"><span class="dot" style="background:#7c3aed;"></span>Ubah PIN Saya</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Ubah PIN login akun Anda sendiri.</div>
+          <button class="btn-primary" style="margin-top:0;" onclick="openChangePwd()">🔑 Ubah PIN</button>
+        </div>
+
+        <!-- Modal Konfigurasi Menu PIC -->
+        <div class="modal-overlay" id="menu-config-modal" style="display:none;z-index:1100;">
+          <div class="modal-box" style="max-width:480px;">
+            <div class="modal-header">
+              <span id="menu-config-title">⚙️ Konfigurasi Menu</span>
+              <button class="modal-close" onclick="closeMenuConfig()">×</button>
+            </div>
+            <div class="modal-body" id="menu-config-body"></div>
+            <div style="padding:12px 16px;display:flex;gap:8px;border-top:1px solid var(--border);">
+              <button class="btn-primary" style="flex:1;margin-top:0;" onclick="saveMenuConfig()">💾 Simpan</button>
+              <button onclick="closeMenuConfig()" style="padding:10px 16px;background:var(--surface3);border:1.5px solid var(--border2);color:var(--text2);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-family:inherit;">Batal</button>
+            </div>
+          </div>
         </div>
 
     </div>
@@ -1416,12 +1438,7 @@ function setSbActive(el){
   el.classList.add('active');var svg=el.querySelector('.sb-svg');if(svg)svg.setAttribute('stroke','rgba(255,255,255,0.95)');
   if(window.innerWidth<=600)closeSidebarMobile();
 }
-function toggleAdminSection(){
-  var w=document.getElementById('admin-content-wrap'),ic=document.getElementById('admin-toggle-icon');
-  if(!w)return;
-  if(w.style.display==='none'){w.style.display='block';if(ic)ic.textContent='▼';renderAdminPage();}
-  else{w.style.display='none';if(ic)ic.textContent='▶';}
-}
+function toggleAdminSection(){ loadAdminUsers(); }
 function renderAdminPage(){
   var el=document.getElementById('admin-content');if(!el)return;
   if(currentRole!=='manager'){el.innerHTML='<div class="no-data">Akses ditolak.</div>';return;}
@@ -1738,13 +1755,16 @@ async function doLogin(){
     }
     const user = json.data;
     if(!user.enabled){ err.textContent='Akun dinonaktifkan.'; document.getElementById('pin-input').value=''; return; }
-    currentUser={pin, name:user.name, role:user.role, enabled:true};
+    currentUser={pin, name:user.name, role:user.role, enabled:true, menuConfig:user.menuConfig||{}};
     currentRole=user.role; currentPin=pin;
     localStorage.setItem('hn_pin',pin);
     localStorage.setItem('hn_role',user.role);
+    localStorage.setItem('hn_menu_cfg', JSON.stringify(user.menuConfig||{}));
     _cacheMyUser(currentUser);
     err.textContent='';
     showApp();
+    // Apply menu config for PIC
+    if(user.role !== 'manager') _applyMenuConfig(user.menuConfig||{});
   } catch(e){
     err.textContent='Gagal koneksi ke server.';
   }
@@ -1838,10 +1858,11 @@ window.onload = function(){
     try {
       const _vj = await fetchGAS({action:'getUserByPin', pin:savedPin});
       if(_vj.status==='ok'&&_vj.data&&_vj.data.enabled){
-        currentUser={pin:savedPin,name:_vj.data.name,role:_vj.data.role,enabled:true};
+        currentUser={pin:savedPin,name:_vj.data.name,role:_vj.data.role,enabled:true,menuConfig:_vj.data.menuConfig||{}};
         currentPin=savedPin;currentRole=_vj.data.role;
         _cacheMyUser(currentUser);
         showApp();
+        if(_vj.data.role !== 'manager') _applyMenuConfig(_vj.data.menuConfig||{});
       } else { localStorage.removeItem('hn_pin'); localStorage.removeItem('hn_role'); }
     } catch(e){
       // Fallback: pakai cache lokal jika GAS tidak bisa diakses
@@ -1872,9 +1893,9 @@ function switchMenu(menu){
   var titles={home:'Beranda',input:'Input Data',log:'Log Harian',report:'Report',setting:'Pengaturan',upload:'ITD Upload'};
   var el=document.getElementById('top-bar-title');if(el&&titles[menu])el.textContent=titles[menu];
   document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('active');});
-  if(menu==='home'){var p=document.getElementById('pane-home');if(p)p.classList.add('active');if(typeof _initHomePic==='function')_initHomePic();}
+  if(menu==='home'){var p=document.getElementById('pane-home');if(p)p.classList.add('active');if(currentRole==='manager'){if(typeof _initHomeMgr==='function')_initHomeMgr();}else{if(typeof _initHomePic==='function')_initHomePic();}}
   else if(menu==='log'){var p=document.getElementById('pane-log');if(p)p.classList.add('active');if(typeof loadLogHarian==='function')loadLogHarian();}
-  else if(menu==='setting'){var p=document.getElementById('pane-setting');if(p)p.classList.add('active');var ac=document.getElementById('admin-card');if(ac)ac.style.display=currentRole==='manager'?'block':'none';}
+  else if(menu==='setting'){var p=document.getElementById('pane-setting');if(p)p.classList.add('active');var ac=document.getElementById('admin-card');if(ac)ac.style.display=currentRole==='manager'?'block':'none';if(currentRole==='manager')loadAdminUsers();}
   else if(menu==='upload'){var p=document.getElementById('pane-upload');if(p)p.classList.add('active');loadBerkasList();}
   else if(menu==='input'){var subs=['maintenance','ots','pengajuan'];var s=subs.indexOf(currentSub)>=0?currentSub:'maintenance';switchSub(s,'input');}
   else if(menu==='report'){var subs=['rep-maintenance','rep-ots','rep-barang','rep-pengajuan','rep-absensi'];var s=subs.indexOf(currentSub)>=0?currentSub:'rep-maintenance';switchSub(s,'report');}
@@ -5677,6 +5698,327 @@ function exportBerkasPDF(id) {
   win.document.close();
   setTimeout(function(){ win.print(); }, 600);
 }
+
+// ════════════════════════════════════════════════════════════
+//  MANAGER DASHBOARD
+// ════════════════════════════════════════════════════════════
+var _mgrDashLoaded = false;
+
+function _initHomeMgr(){
+  // Set tanggal
+  var now = new Date();
+  var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var el = document.getElementById('mgr-dash-date');
+  if(el) el.textContent = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  if(!_mgrDashLoaded) _loadMgrDashboard();
+}
+
+async function _loadMgrDashboard(){
+  var body = document.getElementById('mgr-dash-body');
+  if(!body) return;
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">⏳ Memuat data tim...</div>';
+  try {
+    var json = await fetchGAS({action:'getUsers', pin:currentPin});
+    if(json.status !== 'ok') { body.innerHTML='<div class="no-data">Gagal memuat data.</div>'; return; }
+    var users = (json.data||[]).filter(function(u){ return u.role === 'pic'; });
+    _mgrDashLoaded = true;
+
+    // Summary cards
+    var total = users.length;
+    var aktif = users.filter(function(u){ return u.enabled; }).length;
+
+    var html = '';
+
+    // Summary row
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;">';
+    var summaries = [
+      {label:'Total PIC',val:total,icon:'👥',color:'#1e3a5f'},
+      {label:'PIC Aktif',val:aktif,icon:'✅',color:'#059669'},
+      {label:'PIC Nonaktif',val:total-aktif,icon:'⛔',color:'#dc2626'},
+    ];
+    summaries.forEach(function(s){
+      html += '<div style="background:#fff;border-radius:12px;padding:16px;border:1.5px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);">';
+      html += '<div style="font-size:24px;">'+s.icon+'</div>';
+      html += '<div style="font-size:28px;font-weight:800;color:'+s.color+';line-height:1.2;margin-top:4px;">'+s.val+'</div>';
+      html += '<div style="font-size:11px;color:var(--text2);margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">'+s.label+'</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // PIC cards grid
+    html += '<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Data Tim PIC</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">';
+    users.forEach(function(u){
+      var initial = u.name.charAt(0).toUpperCase();
+      var color   = u.enabled ? '#059669' : '#dc2626';
+      var badge   = u.enabled ? '✅ Aktif' : '⛔ Nonaktif';
+      var badgeBg = u.enabled ? '#dcfce7' : '#fee2e2';
+      html += '<div style="background:#fff;border-radius:12px;padding:16px;border:1.5px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.04);display:flex;align-items:flex-start;gap:14px;">';
+      // Avatar
+      html += '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;">'+initial+'</div>';
+      html += '<div style="flex:1;min-width:0;">';
+      html += '<div style="font-size:14px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_hesc(u.name)+'</div>';
+      html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">PIC — Laporan Harian</div>';
+      html += '<div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap;">';
+      html += '<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;background:'+badgeBg+';color:'+color+';">'+badge+'</span>';
+      html += '</div></div></div>';
+    });
+    html += '</div>';
+
+    // Refresh hint
+    html += '<div style="text-align:center;font-size:11px;color:var(--text3);margin-top:20px;padding-top:12px;border-top:1px solid var(--border);">Data dari Google Sheets · <a href="#" onclick="_mgrDashLoaded=false;_loadMgrDashboard();return false;" style="color:var(--accent);">Refresh</a></div>';
+
+    body.innerHTML = html;
+  } catch(e) {
+    body.innerHTML = '<div class="no-data">Gagal koneksi server.</div>';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  ADMIN USER MANAGEMENT (Settings)
+// ════════════════════════════════════════════════════════════
+var _adminUsers = [];
+var _menuConfigTarget = null;
+
+// All PIC-visible menu items
+var PIC_MENU_ITEMS = [
+  {id:'sb-btn-maintenance', label:'🔧 Perbaikan (Maintenance)'},
+  {id:'sb-btn-ots',         label:'📋 Form OTS'},
+  {id:'mbtn-log',           label:'📂 Log Harian'},
+];
+
+async function loadAdminUsers(){
+  var el = document.getElementById('admin-content');
+  if(!el) return;
+  el.innerHTML = '<div class="loading-text">⏳ Mengambil data user...</div>';
+  try {
+    var json = await fetchGAS({action:'getUsers', pin:currentPin});
+    if(json.status !== 'ok'){ el.innerHTML='<div class="no-data">Gagal memuat.</div>'; return; }
+    _adminUsers = json.data||[];
+    _renderAdminUsers();
+  } catch(e){
+    el.innerHTML = '<div class="no-data">Gagal koneksi.</div>';
+  }
+}
+
+function _renderAdminUsers(){
+  var el = document.getElementById('admin-content');
+  if(!el) return;
+  var users = _adminUsers;
+  if(!users.length){ el.innerHTML='<div class="no-data">Belum ada user.</div>'; return; }
+
+  var rows = '';
+  users.forEach(function(u, i){
+    var isMgr = u.role === 'manager';
+    var badgeBg = isMgr ? '#1e3a5f' : '#0891b2';
+    var statusColor = u.enabled ? '#059669' : '#dc2626';
+    var statusBg    = u.enabled ? '#dcfce7' : '#fee2e2';
+    rows += '<tr style="border-bottom:1px solid var(--border);">';
+    // Avatar + name
+    rows += '<td style="padding:10px 12px;">';
+    rows += '<div style="display:flex;align-items:center;gap:10px;">';
+    rows += '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;">'+u.name.charAt(0).toUpperCase()+'</div>';
+    rows += '<span style="font-size:13px;font-weight:600;">'+_hesc(u.name)+'</span></div></td>';
+    // Role
+    rows += '<td style="padding:10px 8px;"><span style="background:'+badgeBg+';color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;">'+(isMgr?'Manager':'PIC')+'</span></td>';
+    // Status toggle
+    rows += '<td style="padding:10px 8px;">';
+    if(!isMgr){
+      rows += '<button onclick="toggleUserStatus('+i+','+u.enabled+')" style="background:'+statusBg+';color:'+statusColor+';border:1px solid '+statusColor+'44;border-radius:99px;padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;">'+(u.enabled?'✅ Aktif':'⛔ Nonaktif')+'</button>';
+    } else {
+      rows += '<span style="font-size:11px;color:var(--text3);">—</span>';
+    }
+    rows += '</td>';
+    // Actions
+    rows += '<td style="padding:10px 8px;">';
+    if(!isMgr){
+      rows += '<div style="display:flex;gap:4px;">';
+      rows += '<button onclick="openEditUser('+i+')" class="btn-sm-edit" style="font-size:10px;padding:4px 8px;">✏️ Edit</button>';
+      rows += '<button onclick="openMenuConfig('+i+')" class="btn-sm-edit" style="font-size:10px;padding:4px 8px;background:#f3e8ff;color:#6d28d9;border-color:#e9d5ff;">⚙️ Menu</button>';
+      rows += '<button onclick="deleteUser('+i+')" class="btn-sm-edit" style="font-size:10px;padding:4px 8px;background:#fee2e2;color:#b91c1c;border-color:#fca5a5;">🗑</button>';
+      rows += '</div>';
+    } else {
+      rows += '<span style="font-size:11px;color:var(--text3);">Admin</span>';
+    }
+    rows += '</td></tr>';
+  });
+
+  el.innerHTML = '<div style="overflow-x:auto;">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:12px;">'
+    + '<thead><tr style="background:#1e3a5f;color:#fff;">'
+    + '<th style="padding:10px 12px;text-align:left;border-radius:8px 0 0 0;">Nama</th>'
+    + '<th style="padding:10px 8px;text-align:left;">Role</th>'
+    + '<th style="padding:10px 8px;text-align:left;">Status</th>'
+    + '<th style="padding:10px 8px;text-align:left;border-radius:0 8px 0 0;">Aksi</th>'
+    + '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+function openAddUser(){
+  document.getElementById('user-modal-title').textContent = '➕ Tambah PIC Baru';
+  document.getElementById('user-modal-idx').value = '-1';
+  document.getElementById('user-modal-name').value = '';
+  document.getElementById('user-modal-pin').value = '';
+  document.getElementById('user-modal-pin2').value = '';
+  var um = document.getElementById('user-modal');
+  if(um) um.style.display = 'flex';
+}
+
+function openEditUser(idx){
+  var u = _adminUsers[idx];
+  if(!u) return;
+  document.getElementById('user-modal-title').textContent = '✏️ Edit — '+u.name;
+  document.getElementById('user-modal-idx').value = idx;
+  document.getElementById('user-modal-name').value = u.name;
+  document.getElementById('user-modal-pin').value = '';
+  document.getElementById('user-modal-pin2').value = '';
+  var um = document.getElementById('user-modal');
+  if(um) um.style.display = 'flex';
+}
+
+function closeUserModal(){ var el=document.getElementById('user-modal'); if(el) el.style.display='none'; }
+
+async function saveUserModal(){
+  var idx  = parseInt(document.getElementById('user-modal-idx').value);
+  var name = document.getElementById('user-modal-name').value.trim();
+  var pin  = document.getElementById('user-modal-pin').value.trim();
+  var pin2 = document.getElementById('user-modal-pin2').value.trim();
+  if(!name){ showToast('Isi nama user','info'); return; }
+  if(pin && pin !== pin2){ showToast('PIN tidak cocok','err'); return; }
+  if(pin && !/^\d{4}$/.test(pin)){ showToast('PIN harus 4 digit angka','info'); return; }
+  if(idx === -1 && !pin){ showToast('PIN wajib untuk user baru','info'); return; }
+
+  showOverlay('Menyimpan user...');
+  try {
+    // Calculate sheet row (header row 1, data starts row 2)
+    // idx is 0-based index of _adminUsers array
+    // We need to send editRow = row number in sheet
+    var editRow = idx >= 0 ? (idx + 2) : 0; // +2: 1 for header, 1 for 1-based
+    var fd = new FormData();
+    fd.append('data', JSON.stringify({
+      action:'saveUser', pin:currentPin,
+      userPin: pin || (_adminUsers[idx]||{}).pin || '',
+      userName: name,
+      userEnabled: idx >= 0 ? (_adminUsers[idx]||{}).enabled : true,
+      editRow: editRow
+    }));
+    var res  = await fetch(getUrl(),{method:'POST',body:fd});
+    var json = await res.json();
+    hideOverlay();
+    if(json.status==='ok'){
+      showToast(idx===-1?'User ditambahkan':'User diupdate','ok');
+      closeUserModal();
+      loadAdminUsers();
+    } else { showToast(json.message||'Gagal','err'); }
+  } catch(e){ hideOverlay(); showToast('Gagal: '+e.message,'err'); }
+}
+
+async function toggleUserStatus(idx, currentEnabled){
+  var u = _adminUsers[idx];
+  if(!u) return;
+  showOverlay('Mengubah status...');
+  try {
+    var editRow = idx + 2;
+    var fd = new FormData();
+    fd.append('data', JSON.stringify({
+      action:'saveUser', pin:currentPin,
+      userPin: u.pin, userName: u.name,
+      userEnabled: !currentEnabled, editRow: editRow
+    }));
+    var res  = await fetch(getUrl(),{method:'POST',body:fd});
+    var json = await res.json();
+    hideOverlay();
+    if(json.status==='ok'){
+      showToast(!currentEnabled?'User diaktifkan':'User dinonaktifkan','ok');
+      loadAdminUsers();
+    } else showToast(json.message||'Gagal','err');
+  } catch(e){ hideOverlay(); showToast('Gagal: '+e.message,'err'); }
+}
+
+async function deleteUser(idx){
+  var u = _adminUsers[idx];
+  if(!u || u.role === 'manager') return;
+  if(!confirm('Hapus user '+u.name+'? Aksi ini tidak bisa dibatalkan.')) return;
+  showOverlay('Menghapus...');
+  try {
+    var editRow = idx + 2;
+    var fd = new FormData();
+    fd.append('data', JSON.stringify({action:'deleteUser', pin:currentPin, editRow:editRow}));
+    var res  = await fetch(getUrl(),{method:'POST',body:fd});
+    var json = await res.json();
+    hideOverlay();
+    if(json.status==='ok'){ showToast('User dihapus','ok'); loadAdminUsers(); }
+    else showToast(json.message||'Gagal','err');
+  } catch(e){ hideOverlay(); showToast('Gagal: '+e.message,'err'); }
+}
+
+// ── Menu Config Modal ────────────────────────────────────────────────────────
+function openMenuConfig(idx){
+  var u = _adminUsers[idx];
+  if(!u) return;
+  _menuConfigTarget = idx;
+  document.getElementById('menu-config-title').textContent = '⚙️ Menu untuk '+u.name;
+  var cfg = u.menuConfig || {};
+  var body = document.getElementById('menu-config-body');
+  var html = '<div style="padding:16px;">';
+  html += '<div style="font-size:12px;color:var(--text2);margin-bottom:14px;">Pilih menu yang <b>ditampilkan</b> untuk PIC ini. Defaultnya semua tampil.</div>';
+  PIC_MENU_ITEMS.forEach(function(item){
+    var checked = cfg[item.id] === false ? '' : 'checked';
+    html += '<label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;">';
+    html += '<input type="checkbox" id="mcfg-'+item.id+'" '+checked+' style="width:16px;height:16px;accent-color:var(--accent);">';
+    html += '<span style="font-size:13px;font-weight:600;">'+item.label+'</span>';
+    html += '</label>';
+  });
+  html += '</div>';
+  body.innerHTML = html;
+  document.getElementById('menu-config-modal').style.display = 'flex';
+}
+
+function closeMenuConfig(){
+  document.getElementById('menu-config-modal').style.display = 'none';
+  _menuConfigTarget = null;
+}
+
+async function saveMenuConfig(){
+  if(_menuConfigTarget === null) return;
+  var u = _adminUsers[_menuConfigTarget];
+  if(!u) return;
+  var cfg = {};
+  PIC_MENU_ITEMS.forEach(function(item){
+    var cb = document.getElementById('mcfg-'+item.id);
+    if(cb) cfg[item.id] = cb.checked;
+  });
+  showOverlay('Menyimpan konfigurasi...');
+  try {
+    var fd = new FormData();
+    fd.append('data', JSON.stringify({action:'saveMenuConfig', pin:currentPin, picName:u.name, menuConfig:cfg}));
+    var res  = await fetch(getUrl(),{method:'POST',body:fd});
+    var json = await res.json();
+    hideOverlay();
+    if(json.status==='ok'){
+      showToast('Konfigurasi menu disimpan','ok');
+      _adminUsers[_menuConfigTarget].menuConfig = cfg;
+      closeMenuConfig();
+      // Apply immediately if this user is currently logged in (shouldn't happen for manager editing pic)
+    } else showToast(json.message||'Gagal','err');
+  } catch(e){ hideOverlay(); showToast('Gagal: '+e.message,'err'); }
+}
+
+// Apply menu config: called after login for PIC role
+function _applyMenuConfig(cfg){
+  if(!cfg) return;
+  PIC_MENU_ITEMS.forEach(function(item){
+    var el = document.getElementById(item.id);
+    if(!el) return;
+    if(cfg[item.id] === false) el.style.display = 'none';
+    else el.style.display = '';
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  EXPORT ABSENSI — local download (already uses XLSX.writeFile)
+//  (Point 1: already works via XLSX.writeFile, just ensure it triggers)
+// ════════════════════════════════════════════════════════════
 
 </script>
 </body>
