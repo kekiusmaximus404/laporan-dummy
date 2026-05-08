@@ -655,10 +655,24 @@ body{margin:0;overflow-x:hidden;}
 
     <!-- HOME DASHBOARD -->
     <div id="pane-home" class="pane">
-      <div style="min-height:calc(100vh - 54px);background:linear-gradient(135deg,#1e3a5f 0%,#0f2a47 100%);display:flex;align-items:center;justify-content:center;">
+      <!-- Manager: splash -->
+      <div id="home-manager" style="min-height:calc(100vh - 54px);background:linear-gradient(135deg,#1e3a5f 0%,#0f2a47 100%);display:flex;align-items:center;justify-content:center;">
         <div style="text-align:center;color:rgba(255,255,255,0.12);">
           <div style="font-size:80px;font-weight:800;letter-spacing:-4px;line-height:1;">HN</div>
           <div style="font-size:14px;letter-spacing:6px;text-transform:uppercase;margin-top:8px;">IT Departemen</div>
+        </div>
+      </div>
+      <!-- PIC: personal dashboard -->
+      <div id="home-pic" style="display:none;min-height:calc(100vh - 54px);background:var(--bg);overflow-y:auto;">
+        <div id="pic-dash-content" style="max-width:600px;margin:0 auto;padding:16px 12px 40px;">
+          <div style="text-align:center;padding:30px 0 10px;">
+            <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;" id="pic-dash-avatar">A</div>
+            <div style="margin-top:10px;font-size:18px;font-weight:700;color:var(--text1);" id="pic-dash-name">-</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="pic-dash-date">-</div>
+          </div>
+          <div id="pic-dash-body" style="margin-top:4px;">
+            <div style="text-align:center;padding:40px;color:var(--text3);">⏳ Memuat dashboard...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1806,7 +1820,7 @@ function showApp(){
   const homePane = document.getElementById('pane-home');
   if(homePane) homePane.classList.add('active');
 
-  switchMenu('home');}
+  switchMenu('home');if(typeof _initHomePic==='function')_initHomePic();}
 
 
 // Auto login jika pin masih tersimpan
@@ -1858,7 +1872,7 @@ function switchMenu(menu){
   var titles={home:'Beranda',input:'Input Data',log:'Log Harian',report:'Report',setting:'Pengaturan',upload:'ITD Upload'};
   var el=document.getElementById('top-bar-title');if(el&&titles[menu])el.textContent=titles[menu];
   document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('active');});
-  if(menu==='home'){var p=document.getElementById('pane-home');if(p)p.classList.add('active');}
+  if(menu==='home'){var p=document.getElementById('pane-home');if(p)p.classList.add('active');if(typeof _initHomePic==='function')_initHomePic();}
   else if(menu==='log'){var p=document.getElementById('pane-log');if(p)p.classList.add('active');if(typeof loadLogHarian==='function')loadLogHarian();}
   else if(menu==='setting'){var p=document.getElementById('pane-setting');if(p)p.classList.add('active');var ac=document.getElementById('admin-card');if(ac)ac.style.display=currentRole==='manager'?'block':'none';}
   else if(menu==='upload'){var p=document.getElementById('pane-upload');if(p)p.classList.add('active');loadBerkasList();}
@@ -5400,6 +5414,197 @@ async function _deleteBerkas(id){
     else showToast('Gagal: '+(json.message||'error'),'err');
   } catch(e){ hideOverlay(); showToast('Gagal: '+e.message,'err'); }
 }
+
+// ════════════════════════════════════════════════════════════
+//  PIC PERSONAL DASHBOARD — Frontend
+// ════════════════════════════════════════════════════════════
+var _picDashData = null;
+
+function _initHomePic(){
+  // Tampilkan panel sesuai role
+  var mgrPane = document.getElementById('home-manager');
+  var picPane = document.getElementById('home-pic');
+  if(currentRole === 'manager'){
+    if(mgrPane) mgrPane.style.display = 'flex';
+    if(picPane) picPane.style.display = 'none';
+    return;
+  }
+  if(mgrPane) mgrPane.style.display = 'none';
+  if(picPane) picPane.style.display = 'block';
+
+  // Isi header avatar
+  var name = (currentUser && currentUser.name) || '';
+  var av = document.getElementById('pic-dash-avatar');
+  var nm = document.getElementById('pic-dash-name');
+  var dt = document.getElementById('pic-dash-date');
+  if(av) av.textContent = name.charAt(0).toUpperCase();
+  if(nm) nm.textContent = name;
+  var now = new Date();
+  var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  if(dt) dt.textContent = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+
+  // Load data
+  _loadPicDashboard(name);
+}
+
+async function _loadPicDashboard(picName){
+  var body = document.getElementById('pic-dash-body');
+  if(!body) return;
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">⏳ Memuat data...</div>';
+  try {
+    var json = await fetchGAS({action:'getMyDashboard', pin:currentPin, picName:picName});
+    if(json.status !== 'ok' || !json.data){
+      body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Gagal memuat dashboard.</div>';
+      return;
+    }
+    _picDashData = json.data;
+    _renderPicDashboard(json.data);
+  } catch(e){
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Tidak dapat terhubung ke server.</div>';
+  }
+}
+
+function _renderPicDashboard(d){
+  var body = document.getElementById('pic-dash-body');
+  if(!body) return;
+
+  var now = new Date();
+  var isWeekend = now.getDay() === 0 || now.getDay() === 6;
+
+  // ── Today Status Banner ──────────────────────────────────
+  var todayBg, todayIcon, todayTxt, todaySubtxt;
+  if(isWeekend){
+    todayBg='linear-gradient(135deg,#64748b,#475569)';
+    todayIcon='😴'; todayTxt='Hari Libur';
+    todaySubtxt='Selamat beristirahat!';
+  } else if(d.todayLogged){
+    todayBg='linear-gradient(135deg,#059669,#0d9488)';
+    todayIcon='✅'; todayTxt='Laporan Hari Ini Sudah Masuk';
+    todaySubtxt='Terima kasih telah melaporkan aktivitas hari ini.';
+  } else {
+    todayBg='linear-gradient(135deg,#dc2626,#b91c1c)';
+    todayIcon='⚠️'; todayTxt='Laporan Belum Diinput Hari Ini';
+    todaySubtxt='Segera input laporan harian sebelum akhir jam kerja.';
+  }
+
+  var html = '';
+
+  // Today banner
+  html += '<div style="background:'+todayBg+';border-radius:14px;padding:18px 20px;margin-bottom:14px;color:#fff;">';
+  html += '<div style="display:flex;align-items:center;gap:14px;">';
+  html += '<div style="font-size:36px;">'+todayIcon+'</div>';
+  html += '<div><div style="font-size:15px;font-weight:700;">'+todayTxt+'</div>';
+  html += '<div style="font-size:12px;opacity:0.85;margin-top:3px;">'+todaySubtxt+'</div></div></div></div>';
+
+  // ── Streak ──────────────────────────────────────────────
+  if(d.streak > 0 && !isWeekend){
+    var streakColor = d.streak >= 5 ? '#f59e0b' : d.streak >= 3 ? '#3b82f6' : '#6b7280';
+    var streakEmoji = d.streak >= 7 ? '🔥🔥🔥' : d.streak >= 5 ? '🔥🔥' : d.streak >= 3 ? '🔥' : '✨';
+    html += '<div style="background:var(--surface2);border:1.5px solid '+streakColor+'44;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">';
+    html += '<div style="font-size:28px;">'+streakEmoji+'</div>';
+    html += '<div><div style="font-size:13px;font-weight:700;color:var(--text1);">Streak '+d.streak+' Hari Kerja Berturut-turut</div>';
+    html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">Pertahankan konsistensi laporan harianmu!</div></div></div>';
+  }
+
+  // ── Statistik Bulan ─────────────────────────────────────
+  var pct = d.stats.totalWorkdays > 0 ? Math.round(d.stats.totalDaysLogged / d.stats.totalWorkdays * 100) : 0;
+  html += '<div style="background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:14px;">';
+  html += '<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;">📊 Statistik '+_hesc(d.bulan)+'</div>';
+
+  // Progress bar kehadiran
+  html += '<div style="margin-bottom:14px;">';
+  html += '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px;">';
+  html += '<span>Kehadiran Input Laporan</span>';
+  html += '<span style="font-weight:700;color:var(--text1);">'+d.stats.totalDaysLogged+' / '+d.stats.totalWorkdays+' hari kerja</span></div>';
+  html += '<div style="background:var(--border);border-radius:99px;height:8px;overflow:hidden;">';
+  html += '<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#1e3a5f,#3b82f6);border-radius:99px;transition:width 0.6s;"></div></div>';
+  html += '<div style="font-size:11px;color:var(--text3);margin-top:4px;text-align:right;">'+pct+'% hari kerja</div></div>';
+
+  // Stats grid
+  var stats = [
+    {label:'Tiket Hardware', val:d.stats.hw, icon:'🖥️', color:'#3b82f6'},
+    {label:'Tiket Jaringan', val:d.stats.net, icon:'🌐', color:'#0891b2'},
+    {label:'Daily Activity', val:d.stats.daily, icon:'📓', color:'#f59e0b'},
+    {label:'OTS / TL',       val:d.stats.ots, icon:'🚗', color:'#7c3aed'},
+    {label:'Selesai',        val:d.stats.selesai, icon:'✅', color:'#059669'},
+    {label:'Eskalasi',       val:d.stats.eskalasi, icon:'🚨', color:'#dc2626'},
+  ];
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">';
+  stats.forEach(function(s){
+    html += '<div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border);">';
+    html += '<div style="font-size:18px;">'+s.icon+'</div>';
+    html += '<div style="font-size:20px;font-weight:800;color:'+s.color+';line-height:1.2;margin-top:2px;">'+s.val+'</div>';
+    html += '<div style="font-size:10px;color:var(--text3);margin-top:2px;">'+s.label+'</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  // ── Reminder: Hari Kosong ────────────────────────────────
+  if(d.missing && d.missing.length > 0){
+    html += '<div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;padding:14px 16px;margin-bottom:14px;">';
+    html += '<div style="font-size:12px;font-weight:700;color:#b91c1c;margin-bottom:8px;">⚠️ Hari Kerja Belum Diinput</div>';
+    d.missing.forEach(function(ds){
+      var dd = new Date(ds+'T00:00:00');
+      var days2 = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+      var months2 = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+      var label = days2[dd.getDay()]+', '+dd.getDate()+' '+months2[dd.getMonth()];
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #fca5a544;">';
+      html += '<div style="width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0;"></div>';
+      html += '<div style="font-size:12px;color:#7f1d1d;">'+label+' — Belum ada laporan</div>';
+      html += '</div>';
+    });
+    html += '<div style="font-size:11px;color:#b91c1c;margin-top:8px;opacity:0.8;">Segera input laporan sebelum melewati batas 3 hari.</div>';
+    html += '</div>';
+  }
+
+  // ── OTS Bulan Ini ────────────────────────────────────────
+  if(d.otsRecent && d.otsRecent.length > 0){
+    html += '<div style="background:var(--surface2);border-radius:12px;padding:14px 16px;margin-bottom:14px;">';
+    html += '<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">🚗 OTS Bulan Ini</div>';
+    d.otsRecent.forEach(function(o){
+      var dd = new Date(o.tgl+'T00:00:00');
+      var months3 = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+      var days3 = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">';
+      html += '<div style="width:36px;height:36px;border-radius:8px;background:#7c3aed22;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🚗</div>';
+      html += '<div><div style="font-size:12px;font-weight:600;color:var(--text1);">'+_hesc(o.bo)+'</div>';
+      html += '<div style="font-size:11px;color:var(--text3);">'+days3[dd.getDay()]+', '+dd.getDate()+' '+months3[dd.getMonth()]+'</div></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // ── Aktivitas Terbaru ────────────────────────────────────
+  if(d.recent && d.recent.length > 0){
+    html += '<div style="background:var(--surface2);border-radius:12px;padding:14px 16px;margin-bottom:14px;">';
+    html += '<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">🕐 Aktivitas Terbaru</div>';
+    d.recent.forEach(function(r){
+      var tipeIcon = r.tipe==='Hardware'?'🖥️':r.tipe==='Jaringan'?'🌐':'📓';
+      var statusColor = r.status==='Selesai'?'#059669':r.status==='Proses'?'#d97706':r.status==='Eskalasi'?'#dc2626':'#6b7280';
+      var dd2 = new Date(r.tgl+'T00:00:00');
+      var months4 = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+      html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">';
+      html += '<div style="width:32px;height:32px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;border:1px solid var(--border);">'+tipeIcon+'</div>';
+      html += '<div style="flex:1;min-width:0;">';
+      html += '<div style="font-size:12px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_hesc(r.kat)+(r.sub&&r.sub!=='-'?' — '+_hesc(r.sub):'')+'</div>';
+      html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">'+dd2.getDate()+' '+months4[dd2.getMonth()]+' · '+_hesc(r.lokasi||'')+'</div>';
+      html += '</div>';
+      if(r.status){
+        html += '<div style="font-size:10px;font-weight:600;color:'+statusColor+';background:'+statusColor+'18;padding:2px 8px;border-radius:99px;flex-shrink:0;align-self:center;">'+_hesc(r.status)+'</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Footer refresh info
+  html += '<div style="text-align:center;font-size:11px;color:var(--text3);padding-top:8px;">Data diperbarui saat login · Hanya dapat dilihat</div>';
+
+  body.innerHTML = html;
+}
+
+function _hesc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 </script>
 </body>
