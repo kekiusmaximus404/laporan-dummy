@@ -5633,145 +5633,228 @@ function _renderPicDashboard(d){
 
 function _hesc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ── Export Berkas sebagai PDF ─────────────────────────────────────────────────
+// ── Export Berkas sebagai PDF — KOP SURAT CUKK + WATERMARK ─────────────────
 function exportBerkasPDF(id) {
-  var b = _berkasAll.find(function(x){ return x.id === id; });
+  var b = (_berkasAll||[]).find(function(x){ return x.id === id; });
   if (!b) { showToast('Data tidak ditemukan','info'); return; }
 
-  var logoB64 = typeof LOGO_KOP_B64 !== 'undefined' ? LOGO_KOP_B64 : '';
-  var tglFmt  = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  var icon    = _getFileIcon(b.namaFile);
+  var tglFmt = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  var icon   = typeof _getFileIcon === 'function' ? _getFileIcon(b.namaFile) : '📄';
 
   var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
-  html += '<title>Berkas \u2014 '+_esc(b.namaFile)+'</title>';
+  html += '<title>Arsip Berkas — '+_esc(b.namaFile)+'</title>';
   html += '<style>';
-  html += 'body{font-family:Arial,sans-serif;margin:0;padding:24px;color:#1a1a2e;font-size:13px;}';
-  html += '.kop{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1e3a5f;padding-bottom:12px;margin-bottom:20px;}';
-  html += '.kop img{height:60px;width:auto;}';
-  html += '.kop-title{flex:1;}';
-  html += '.kop-title h2{margin:0;font-size:16px;color:#1e3a5f;}';
-  html += '.kop-title p{margin:2px 0;font-size:11px;color:#555;}';
-  html += '.badge{background:#1e3a5f;color:#fff;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700;display:inline-block;margin-bottom:16px;}';
-  html += '.info-grid{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;margin-bottom:20px;border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#f9fafb;}';
-  html += '.info-label{font-weight:700;color:#374151;}';
-  html += '.info-val{color:#111827;}';
-  html += '.links{margin-top:20px;padding:14px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe;}';
-  html += '.links a{display:block;font-size:12px;color:#1d4ed8;margin-bottom:6px;word-break:break-all;}';
-  html += '.footer{margin-top:32px;border-top:1px solid #e5e7eb;padding-top:10px;font-size:10px;color:#9ca3af;text-align:center;}';
-  html += '@media print{.no-print{display:none}body{padding:16px}}';
+  html += '*{box-sizing:border-box;margin:0;padding:0;}';
+  html += 'body{font-family:Arial,sans-serif;font-size:12px;color:#111;background:#fff;padding:28px 32px;}';
+
+  // watermark
+  html += '@keyframes none{}';
+  html += '.watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(45deg);font-size:20px;font-weight:900;color:rgba(30,58,95,0.07);white-space:nowrap;text-align:center;pointer-events:none;z-index:0;line-height:1.8;}';
+
+  // KOP
+  html += '.kop-wrap{border-bottom:4px solid #1e3a5f;padding-bottom:10px;margin-bottom:4px;display:flex;align-items:center;gap:14px;position:relative;z-index:1;}';
+  html += '.kop-emblem{width:56px;height:56px;border-radius:50%;border:3px solid #8B0000;display:flex;align-items:center;justify-content:center;background:#fff;flex-shrink:0;}';
+  html += '.kop-emblem-inner{width:44px;height:44px;border-radius:50%;background:#8B0000;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:800;text-align:center;line-height:1.2;}';
+  html += '.kop-center{flex:1;text-align:center;}';
+  html += '.kop-center h1{font-size:18px;font-weight:900;color:#1e3a5f;letter-spacing:1px;}';
+  html += '.kop-center p{font-size:7.5px;color:#333;line-height:1.6;}';
+  html += '.kop-logo{font-size:13px;font-weight:900;text-align:right;line-height:1.3;}';
+  html += '.kop-logo .kl{color:#1e3a5f;}.kop-logo .km{color:#cc0000;}';
+  html += '.kop-logo .sub{font-size:6.5px;color:#555;letter-spacing:3px;}';
+  html += '.red-line{height:4px;background:#cc0000;margin-bottom:18px;}';
+
+  // body
+  html += 'h2.doc-title{text-align:center;font-size:14px;font-weight:900;text-decoration:underline;margin-bottom:18px;color:#1e3a5f;}';
+  html += '.info-table{width:100%;border-collapse:collapse;margin-bottom:18px;}';
+  html += '.info-table td{padding:7px 10px;border:1px solid #d1d5db;font-size:12px;}';
+  html += '.info-table td:first-child{width:35%;font-weight:700;background:#f9fafb;color:#374151;}';
+  html += '.links-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:12px;margin-bottom:18px;}';
+  html += '.links-box a{display:block;font-size:11px;color:#1d4ed8;word-break:break-all;margin-bottom:4px;}';
+  html += '.footer-doc{margin-top:28px;border-top:1px solid #e5e7eb;padding-top:8px;font-size:9px;color:#9ca3af;text-align:center;font-style:italic;}';
+  html += '.values{margin-top:16px;font-style:italic;font-size:7.5px;color:#1e3a5f;border-top:1px solid #1e3a5f;padding-top:6px;line-height:1.6;}';
+  html += '.no-print{margin-top:24px;text-align:center;}';
+  html += '@media print{.no-print{display:none!important}.watermark{position:fixed!important;}}';
   html += '</style></head><body>';
 
-  html += '<div class="kop">';
-  if (logoB64) html += '<img src="'+logoB64+'" alt="Logo">';
-  html += '<div class="kop-title">';
-  html += '<h2>CU KELING KUMANG \u2014 IT Departemen</h2>';
-  html += '<p>Dokumen Arsip Digital | Dicetak: '+tglFmt+'</p>';
-  html += '</div></div>';
+  // Watermark
+  html += '<div class="watermark">Diterbitkan oleh:<br>Departemen Teknologi Informasi<br>CU Keling Kumang</div>';
 
-  html += '<div class="badge">\uD83D\uDCC1 ITD Upload \u2014 Arsip Berkas</div>';
+  // KOP SURAT
+  html += '<div class="kop-wrap">';
+  html += '<div class="kop-emblem"><div class="kop-emblem-inner">CU<br>KK</div></div>';
+  html += '<div class="kop-center">';
+  html += '<h1>CU KELING KUMANG</h1>';
+  html += '<p>Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau<br>';
+  html += 'Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513<br>';
+  html += 'Kabupaten Sekadau, Kalimantan Barat, Indonesia<br>';
+  html += 'E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</p>';
+  html += '</div>';
+  html += '<div class="kop-logo"><span class="kl">Keling</span><br><span class="km">Kumang</span><br><div class="sub">Member-TBL-Entrepreneur</div></div>';
+  html += '</div>';
+  html += '<div class="red-line"></div>';
 
-  html += '<div class="info-grid">';
-  html += '<span class="info-label">ID Berkas</span><span class="info-val">'+_esc(b.id)+'</span>';
-  html += '<span class="info-label">Judul / Kategori</span><span class="info-val">'+_esc(b.title)+'</span>';
-  html += '<span class="info-label">Nama File</span><span class="info-val">'+icon+' '+_esc(b.namaFile)+'</span>';
-  html += '<span class="info-label">Tipe</span><span class="info-val">'+_esc(b.tipe).toUpperCase()+'</span>';
-  html += '<span class="info-label">Ukuran</span><span class="info-val">'+b.sizeKB+' KB</span>';
-  html += '<span class="info-label">Folder</span><span class="info-val">'+_esc(b.folder)+'</span>';
-  html += '<span class="info-label">Diupload Oleh</span><span class="info-val">'+_esc(b.uploader)+'</span>';
-  html += '<span class="info-label">Waktu Upload</span><span class="info-val">'+_esc(b.waktu)+'</span>';
+  // TITLE
+  html += '<h2 class="doc-title">Dokumen Arsip Digital — ITD Upload</h2>';
+
+  // INFO TABLE
+  html += '<table class="info-table">';
+  var rows = [
+    ['ID Berkas', _esc(b.id||'-')],
+    ['Judul / Kategori', _esc(b.title||'-')],
+    ['Nama File', icon+' '+_esc(b.namaFile||'-')],
+    ['Tipe File', _esc((b.tipe||'-').toUpperCase())],
+    ['Ukuran', (b.sizeKB||0)+' KB'],
+    ['Folder', _esc(b.folder||'-')],
+    ['Diupload Oleh', _esc(b.uploader||'-')],
+    ['Waktu Upload', _esc(b.waktu||'-')],
+    ['Dicetak', tglFmt],
+  ];
+  rows.forEach(function(r){
+    html += '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';
+  });
+  html += '</table>';
+
+  // LINKS
+  html += '<div class="links-box"><strong style="font-size:12px;color:#1e3a5f;">🔗 Akses File:</strong><br>';
+  if(b.fileUrl&&b.fileUrl.length>5) html += '<a href="'+b.fileUrl+'">📄 File Asli: '+b.fileUrl+'</a>';
+  if(b.pdfUrl&&b.pdfUrl.length>5)  html += '<a href="'+b.pdfUrl+'">📕 Versi PDF: '+b.pdfUrl+'</a>';
   html += '</div>';
 
-  html += '<div class="links">';
-  html += '<strong style="font-size:12px;color:#1e3a5f;">\uD83D\uDD17 Akses File:</strong><br>';
-  if (b.fileUrl && b.fileUrl.length > 5) html += '<a href="'+b.fileUrl+'">\uD83D\uDCC4 File Asli: '+b.fileUrl+'</a>';
-  if (b.pdfUrl && b.pdfUrl.length > 5)  html += '<a href="'+b.pdfUrl+'">\uD83D\uDCD5 Versi PDF: '+b.pdfUrl+'</a>';
-  html += '</div>';
+  // FOOTER
+  html += '<div class="footer-doc">Dokumen ini digenerate otomatis oleh Sistem Informasi IT Departemen H&N — CU Keling Kumang</div>';
 
-  html += '<div class="footer">Dokumen ini digenerate otomatis oleh Sistem Informasi IT Departemen H&N \u2014 CU Keling Kumang</div>';
-  html += '<div class="no-print" style="margin-top:24px;text-align:center;">';
-  html += '<button onclick="window.print()" style="padding:10px 24px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">\uD83D\uDDB8 Print / Simpan PDF</button>';
-  html += '</div>';
+  // Footer values
+  html += '<div class="values">Shared Values: Integrity, Network, Value Creation, Innovation, Credibility, Togetherness, Unity, Speed<br>';
+  html += 'Visi: Menjadi Credit Union Pilihan Utama Masyarakat di Kalimantan<br>';
+  html += 'Misi: Melayani Anggota di Kalimantan dengan Menyediakan Pelayanan Keuangan yang Bertanggungjawab dan Berkelanjutan untuk Meningkatkan Standar Hidup dan Kebahagiaan</div>';
+
+  html += '<div class="no-print"><button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🖨️ Print / Simpan PDF</button></div>';
   html += '</body></html>';
 
   var win = window.open('','_blank');
+  if(!win){ showToast('Popup diblokir browser. Izinkan popup.','info'); return; }
   win.document.write(html);
   win.document.close();
-  setTimeout(function(){ win.print(); }, 600);
+  setTimeout(function(){ win.print(); }, 800);
 }
-
-// ════════════════════════════════════════════════════════════
-//  MANAGER DASHBOARD
-// ════════════════════════════════════════════════════════════
-var _mgrDashLoaded = false;
-
-function _initHomeMgr(){
-  // Set tanggal
-  var now = new Date();
-  var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-  var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  var el = document.getElementById('mgr-dash-date');
-  if(el) el.textContent = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
-  if(!_mgrDashLoaded) _loadMgrDashboard();
-}
-
 async function _loadMgrDashboard(){
   var body = document.getElementById('mgr-dash-body');
   if(!body) return;
-  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">⏳ Memuat data tim...</div>';
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">⏳ Memuat data tim PIC...</div>';
   try {
-    var json = await fetchGAS({action:'getUsers', pin:currentPin});
-    if(json.status !== 'ok') { body.innerHTML='<div class="no-data">Gagal memuat data.</div>'; return; }
-    var users = (json.data||[]).filter(function(u){ return u.role === 'pic'; });
+    // Load all users + all PIC dashboards in parallel
+    var usersJson = await fetchGAS({action:'getUsers', pin:currentPin});
+    if(usersJson.status !== 'ok'){ body.innerHTML='<div class="no-data">Gagal memuat data.</div>'; return; }
+    var users = (usersJson.data||[]).filter(function(u){ return u.role === 'pic'; });
     _mgrDashLoaded = true;
 
-    // Summary cards
-    var total = users.length;
-    var aktif = users.filter(function(u){ return u.enabled; }).length;
+    // Summary
+    var total  = users.length;
+    var aktif  = users.filter(function(u){ return u.enabled; }).length;
+    var now    = new Date();
+    var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    var bulan  = months[now.getMonth()]+' '+now.getFullYear();
 
     var html = '';
 
-    // Summary row
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;">';
-    var summaries = [
-      {label:'Total PIC',val:total,icon:'👥',color:'#1e3a5f'},
-      {label:'PIC Aktif',val:aktif,icon:'✅',color:'#059669'},
-      {label:'PIC Nonaktif',val:total-aktif,icon:'⛔',color:'#dc2626'},
-    ];
-    summaries.forEach(function(s){
-      html += '<div style="background:#fff;border-radius:12px;padding:16px;border:1.5px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.05);">';
-      html += '<div style="font-size:24px;">'+s.icon+'</div>';
-      html += '<div style="font-size:28px;font-weight:800;color:'+s.color+';line-height:1.2;margin-top:4px;">'+s.val+'</div>';
-      html += '<div style="font-size:11px;color:var(--text2);margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">'+s.label+'</div>';
+    // Header summary strip
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">';
+    [{label:'Total PIC',val:total,icon:'👥',c:'#1e3a5f'},{label:'PIC Aktif',val:aktif,icon:'✅',c:'#059669'},{label:'Nonaktif',val:total-aktif,icon:'⛔',c:'#dc2626'}].forEach(function(s){
+      html += '<div style="background:#fff;border-radius:12px;padding:14px;border:1.5px solid var(--border);text-align:center;">';
+      html += '<div style="font-size:22px;">'+s.icon+'</div>';
+      html += '<div style="font-size:26px;font-weight:800;color:'+s.c+';line-height:1.1;margin-top:2px;">'+s.val+'</div>';
+      html += '<div style="font-size:10px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">'+s.label+'</div>';
       html += '</div>';
     });
     html += '</div>';
 
-    // PIC cards grid
-    html += '<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Data Tim PIC</div>';
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">';
+    // Section label
+    html += '<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;">📊 Statistik Per PIC — '+bulan+'</div>';
+
+    // PIC placeholder cards while loading each dashboard
+    html += '<div id="mgr-pic-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;">';
     users.forEach(function(u){
       var initial = u.name.charAt(0).toUpperCase();
-      var color   = u.enabled ? '#059669' : '#dc2626';
-      var badge   = u.enabled ? '✅ Aktif' : '⛔ Nonaktif';
-      var badgeBg = u.enabled ? '#dcfce7' : '#fee2e2';
-      html += '<div style="background:#fff;border-radius:12px;padding:16px;border:1.5px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.04);display:flex;align-items:flex-start;gap:14px;">';
-      // Avatar
-      html += '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;">'+initial+'</div>';
-      html += '<div style="flex:1;min-width:0;">';
-      html += '<div style="font-size:14px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_hesc(u.name)+'</div>';
-      html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">PIC — Laporan Harian</div>';
-      html += '<div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap;">';
-      html += '<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;background:'+badgeBg+';color:'+color+';">'+badge+'</span>';
-      html += '</div></div></div>';
+      var enabled = u.enabled;
+      html += '<div id="mgr-pic-card-'+_slugName(u.name)+'" style="background:#fff;border-radius:14px;border:1.5px solid var(--border);overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.05);">';
+      html += '<div style="background:linear-gradient(135deg,#1e3a5f,#1d4ed8);padding:12px 16px;display:flex;align-items:center;gap:12px;">';
+      html += '<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0;">'+initial+'</div>';
+      html += '<div><div style="font-size:13px;font-weight:700;color:#fff;">'+_hesc(u.name)+'</div>';
+      html += '<div style="font-size:10px;color:rgba(255,255,255,0.7);">'+( enabled?'✅ Aktif':'⛔ Nonaktif')+'</div></div></div>';
+      html += '<div id="mgr-pic-stats-'+_slugName(u.name)+'" style="padding:12px 14px;min-height:100px;display:flex;align-items:center;justify-content:center;"><div style="font-size:11px;color:var(--text3);">⏳ Memuat...</div></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '<div style="text-align:center;font-size:11px;color:var(--text3);margin-top:20px;border-top:1px solid var(--border);padding-top:10px;">Data diambil dari Google Sheets · <a href="#" onclick="_mgrDashLoaded=false;_loadMgrDashboard();return false;" style="color:var(--accent);">🔄 Refresh</a></div>';
+
+    body.innerHTML = html;
+
+    // Now load each PIC's dashboard data
+    users.forEach(function(u){
+      _loadPicCardData(u.name);
+    });
+
+  } catch(e) {
+    body.innerHTML = '<div class="no-data">Gagal koneksi server: '+e.message+'</div>';
+  }
+}
+
+function _slugName(name){ return name.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+async function _loadPicCardData(picName){
+  var slug    = _slugName(picName);
+  var el      = document.getElementById('mgr-pic-stats-'+slug);
+  if(!el) return;
+  try {
+    var json = await fetchGAS({action:'getMyDashboard', pin:currentPin, picName:picName});
+    if(json.status!=='ok'||!json.data){ el.innerHTML='<div style="font-size:11px;color:var(--text3);text-align:center;">Belum ada data</div>'; return; }
+    var d = json.data;
+    var now = new Date();
+    var isWeekend = now.getDay()===0||now.getDay()===6;
+    var todayColor = d.todayLogged?'#059669':(isWeekend?'#64748b':'#dc2626');
+    var todayIcon  = d.todayLogged?'✅':(isWeekend?'😴':'⚠️');
+    var todayTxt   = d.todayLogged?'Laporan masuk':(isWeekend?'Hari libur':'Belum input');
+    var pct = d.stats.totalWorkdays>0 ? Math.round(d.stats.totalDaysLogged/d.stats.totalWorkdays*100) : 0;
+
+    var html = '';
+    // Today status bar
+    html += '<div style="background:'+todayColor+'18;border-left:3px solid '+todayColor+';padding:7px 10px;border-radius:0 6px 6px 0;margin-bottom:10px;display:flex;align-items:center;gap:8px;">';
+    html += '<span style="font-size:14px;">'+todayIcon+'</span>';
+    html += '<div><div style="font-size:11px;font-weight:700;color:'+todayColor+';">'+todayTxt+'</div>';
+    html += '<div style="font-size:10px;color:var(--text3);">'+d.bulan+'</div></div>';
+    if(d.streak>0) html += '<div style="margin-left:auto;font-size:10px;font-weight:700;color:#f59e0b;">🔥 '+d.streak+' hari</div>';
+    html += '</div>';
+
+    // Stats grid mini
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">';
+    var stats = [
+      {label:'Kehadiran',val:d.stats.totalDaysLogged+'/'+d.stats.totalWorkdays,icon:'📅'},
+      {label:'HW/Net',val:d.stats.hw+d.stats.net,icon:'🖥️'},
+      {label:'OTS',val:d.stats.ots,icon:'🚗'},
+    ];
+    stats.forEach(function(s){
+      html += '<div style="background:var(--surface2);border-radius:8px;padding:7px;text-align:center;">';
+      html += '<div style="font-size:13px;">'+s.icon+'</div>';
+      html += '<div style="font-size:14px;font-weight:800;color:var(--text1);line-height:1.1;">'+s.val+'</div>';
+      html += '<div style="font-size:9px;color:var(--text3);">'+s.label+'</div>';
+      html += '</div>';
     });
     html += '</div>';
 
-    // Refresh hint
-    html += '<div style="text-align:center;font-size:11px;color:var(--text3);margin-top:20px;padding-top:12px;border-top:1px solid var(--border);">Data dari Google Sheets · <a href="#" onclick="_mgrDashLoaded=false;_loadMgrDashboard();return false;" style="color:var(--accent);">Refresh</a></div>';
+    // Progress bar
+    html += '<div style="background:var(--border);border-radius:99px;height:5px;overflow:hidden;">';
+    html += '<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#1e3a5f,#3b82f6);border-radius:99px;"></div></div>';
+    html += '<div style="font-size:9px;color:var(--text3);text-align:right;margin-top:3px;">'+pct+'% hari kerja diinput</div>';
 
-    body.innerHTML = html;
-  } catch(e) {
-    body.innerHTML = '<div class="no-data">Gagal koneksi server.</div>';
+    // Reminder jika ada hari kosong
+    if(d.missing&&d.missing.length>0){
+      html += '<div style="margin-top:8px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:6px 8px;">';
+      html += '<div style="font-size:10px;font-weight:700;color:#b91c1c;">⚠️ '+d.missing.length+' hari kerja belum diinput</div></div>';
+    }
+
+    el.innerHTML = html;
+  } catch(e){
+    el.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;">Gagal memuat</div>';
   }
 }
 
@@ -5783,9 +5866,16 @@ var _menuConfigTarget = null;
 
 // All PIC-visible menu items
 var PIC_MENU_ITEMS = [
-  {id:'sb-btn-maintenance', label:'🔧 Perbaikan (Maintenance)'},
-  {id:'sb-btn-ots',         label:'📋 Form OTS'},
-  {id:'mbtn-log',           label:'📂 Log Harian'},
+  {id:'sb-btn-maintenance',    label:'🔧 Maintenance (Perbaikan HW/Jaringan)', section:'Input'},
+  {id:'sb-btn-ots',            label:'📋 Form OTS',                            section:'Input'},
+  {id:'sb-btn-pengajuan',      label:'🛒 Pengajuan Barang',                    section:'Input'},
+  {id:'mbtn-log',              label:'📂 Log Harian',                          section:'Log & Laporan'},
+  {id:'sb-btn-rep-maintenance',label:'📊 Report Maintenance',                  section:'Log & Laporan'},
+  {id:'sb-btn-rep-ots',        label:'📊 Report OTS',                          section:'Log & Laporan'},
+  {id:'sb-btn-rep-barang',     label:'📦 Penggunaan Barang',                   section:'Log & Laporan'},
+  {id:'sb-btn-rep-pengajuan',  label:'🛒 Pengajuan Barang (Laporan)',           section:'Log & Laporan'},
+  {id:'sb-btn-rep-absensi',    label:'📅 Rekap Absensi',                       section:'Log & Laporan'},
+  {id:'sb-btn-upload',         label:'📁 ITD Upload',                          section:'Berkas & Upload'},
 ];
 
 async function loadAdminUsers(){
@@ -5957,21 +6047,51 @@ function openMenuConfig(idx){
   var u = _adminUsers[idx];
   if(!u) return;
   _menuConfigTarget = idx;
-  document.getElementById('menu-config-title').textContent = '⚙️ Menu untuk '+u.name;
+  document.getElementById('menu-config-title').textContent = '⚙️ Akses Menu — '+u.name;
   var cfg = u.menuConfig || {};
   var body = document.getElementById('menu-config-body');
-  var html = '<div style="padding:16px;">';
-  html += '<div style="font-size:12px;color:var(--text2);margin-bottom:14px;">Pilih menu yang <b>ditampilkan</b> untuk PIC ini. Defaultnya semua tampil.</div>';
+
+  // Group by section
+  var sections = {};
   PIC_MENU_ITEMS.forEach(function(item){
-    var checked = cfg[item.id] === false ? '' : 'checked';
-    html += '<label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;">';
-    html += '<input type="checkbox" id="mcfg-'+item.id+'" '+checked+' style="width:16px;height:16px;accent-color:var(--accent);">';
-    html += '<span style="font-size:13px;font-weight:600;">'+item.label+'</span>';
-    html += '</label>';
+    var sec = item.section || 'Lainnya';
+    if(!sections[sec]) sections[sec] = [];
+    sections[sec].push(item);
+  });
+
+  var html = '<div style="padding:14px 16px;">';
+  html += '<div style="font-size:12px;color:var(--text2);margin-bottom:14px;background:var(--surface2);padding:10px;border-radius:8px;">✅ <b>Centang</b> = menu <b>aktif/tampil</b> untuk PIC ini. Hilangkan centang untuk menyembunyikan menu.</div>';
+  // Select All / None buttons
+  html += '<div style="display:flex;gap:6px;margin-bottom:14px;">';
+  html += '<button onclick="_mcfgSelectAll(true)" style="font-size:11px;padding:4px 10px;border-radius:99px;background:#dcfce7;color:#065f46;border:1px solid #a7f3d0;cursor:pointer;font-family:inherit;font-weight:600;">✅ Aktifkan Semua</button>';
+  html += '<button onclick="_mcfgSelectAll(false)" style="font-size:11px;padding:4px 10px;border-radius:99px;background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;cursor:pointer;font-family:inherit;font-weight:600;">⛔ Nonaktifkan Semua</button>';
+  html += '</div>';
+
+  Object.keys(sections).forEach(function(sec){
+    html += '<div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;padding:8px 0 6px;border-bottom:2px solid var(--border2);margin-bottom:4px;">'+sec+'</div>';
+    sections[sec].forEach(function(item){
+      var checked = cfg[item.id] === false ? '' : 'checked';
+      var isOn = checked === 'checked';
+      html += '<label style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--border);cursor:pointer;">';
+      html += '<input type="checkbox" id="mcfg-'+item.id+'" '+(isOn?'checked':'')+' style="width:16px;height:16px;accent-color:var(--accent);" onchange="this.parentElement.style.opacity=this.checked?String(1):String(0.45)">';
+      html += '<span style="font-size:13px;font-weight:600;'+(isOn?'':'opacity:0.45;')+'">'+item.label+'</span>';
+      html += '</label>';
+    });
+    html += '<div style="margin-bottom:10px;"></div>';
   });
   html += '</div>';
   body.innerHTML = html;
   document.getElementById('menu-config-modal').style.display = 'flex';
+}
+
+function _mcfgSelectAll(val){
+  PIC_MENU_ITEMS.forEach(function(item){
+    var cb = document.getElementById('mcfg-'+item.id);
+    if(cb){
+      cb.checked = val;
+      cb.parentElement.style.opacity = val ? '1' : '0.45';
+    }
+  });
 }
 
 function closeMenuConfig(){
