@@ -605,6 +605,11 @@ body{margin:0;overflow-x:hidden;}
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         <span class="sb-label">Rekap Absensi</span>
       </button>
+      <div class="sb-sec" id="sb-sec-upload-label">Berkas & Upload</div>
+      <button id="sb-btn-upload" class="sb-item" onclick="switchMenu('upload');setSbActive(this)">
+        <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        <span class="sb-label">ITD Upload</span>
+      </button>
       <div class="sb-sec" id="sb-sec-sistem">Sistem</div>
       <button id="mbtn-setting" class="sb-item" onclick="switchMenu('setting');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -1127,6 +1132,77 @@ body{margin:0;overflow-x:hidden;}
       </div>
     </div>
     <!-- SETTING -->
+    <!-- ITD UPLOAD PANE -->
+    <div id="pane-upload" class="pane">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:2px solid var(--border);">
+        <button onclick="switchMenu('home')" style="padding:7px 14px;background:transparent;border:2px solid var(--border2);color:var(--text3);font-size:12px;font-weight:700;cursor:pointer;border-radius:99px;font-family:inherit;">🏠 Home</button>
+        <div style="font-size:12px;font-weight:700;color:var(--text2);letter-spacing:0.05em;text-transform:uppercase;">📁 ITD Upload — Berkas</div>
+      </div>
+      <div class="container">
+
+        <!-- Upload Card -->
+        <div class="card" style="border:2px dashed var(--border2);background:var(--surface2);">
+          <div class="card-title" style="margin-bottom:12px;"><span class="dot" style="background:#7c3aed;"></span>Upload Berkas Baru</div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Judul / Kategori Dokumen <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="upload-title" class="input-field" placeholder="cth: Surat Tugas, Laporan Bulanan, Notulen Rapat..." style="margin:0;">
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">Dokumen akan disimpan di folder sesuai judul ini di Google Drive.</div>
+          </div>
+
+          <!-- Dropzone -->
+          <div id="upload-dropzone" onclick="document.getElementById('upload-file-input').click()"
+            style="border:2px dashed var(--border2);border-radius:var(--radius-sm);padding:32px 20px;text-align:center;cursor:pointer;background:var(--bg);transition:all 0.2s;margin-bottom:12px;"
+            ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='rgba(59,130,246,0.04)'"
+            ondragleave="this.style.borderColor='var(--border2)';this.style.background='var(--bg)'"
+            ondrop="_handleUploadDrop(event)">
+            <div style="font-size:32px;margin-bottom:8px;">📂</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text1);margin-bottom:4px;">Klik atau drag & drop file di sini</div>
+            <div style="font-size:11px;color:var(--text3);">Word (.docx .doc), Excel (.xlsx .xls), PowerPoint (.pptx), PDF, TXT, CSV</div>
+            <input type="file" id="upload-file-input" style="display:none;" accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf,.txt,.csv" onchange="_onUploadFileSelected(this)">
+          </div>
+
+          <!-- File preview -->
+          <div id="upload-file-preview" style="display:none;background:var(--surface3);border-radius:var(--radius-xs);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+            <div id="upload-file-icon" style="font-size:28px;">📄</div>
+            <div style="flex:1;min-width:0;">
+              <div id="upload-file-name" style="font-size:13px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">-</div>
+              <div id="upload-file-size" style="font-size:11px;color:var(--text3);">-</div>
+            </div>
+            <button onclick="_clearUploadFile()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:4px;" title="Hapus">×</button>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn-primary" style="flex:1;margin-top:0;padding:11px;" onclick="doUploadBerkas()">
+              ☁️ Upload & Simpan ke Drive
+            </button>
+            <div style="font-size:11px;color:var(--text3);text-align:right;">Otomatis convert<br>ke PDF jika bisa</div>
+          </div>
+          <div id="upload-progress" style="display:none;margin-top:12px;">
+            <div style="background:var(--border);border-radius:99px;height:6px;overflow:hidden;">
+              <div id="upload-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--accent),#7c3aed);width:0%;transition:width 0.4s;border-radius:99px;"></div>
+            </div>
+            <div id="upload-progress-text" style="font-size:11px;color:var(--text2);margin-top:6px;text-align:center;">Mengunggah...</div>
+          </div>
+        </div>
+
+        <!-- Daftar Berkas -->
+        <div class="card" style="margin-top:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <div class="card-title" style="margin:0;"><span class="dot" style="background:#0891b2;"></span>Daftar Berkas Tersimpan</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="text" id="berkas-search" placeholder="Cari judul / nama file..." class="input-field" style="margin:0;font-size:12px;padding:6px 10px;width:200px;" oninput="_filterBerkas()">
+              <button class="btn-outline" onclick="loadBerkasList()" style="padding:6px 14px;font-size:12px;">🔄 Refresh</button>
+            </div>
+          </div>
+          <div id="berkas-list-content">
+            <div class="no-data"><div class="no-data-icon">📁</div>Belum ada berkas. Upload dokumen pertama Anda.</div>
+          </div>
+        </div>
+
+      </div><!-- end container -->
+    </div><!-- end pane-upload -->
+
     <div id="pane-setting" class="pane">
       <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:2px solid var(--border);">
         <button onclick="switchMenu('home')" style="padding:7px 14px;background:transparent;border:2px solid var(--border2);color:var(--text3);font-size:12px;font-weight:700;cursor:pointer;border-radius:99px;font-family:inherit;transition:all 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">🏠 Home</button>
@@ -1682,7 +1758,8 @@ function showApp(){
   var isManager = currentRole === 'manager';
   var managerOnly = ['sb-btn-pengajuan','sb-btn-rep-barang','sb-btn-rep-pengajuan',
     'sb-btn-rep-maintenance','sb-btn-rep-ots','sb-btn-rep-absensi',
-    'mbtn-setting','sb-sec-laporan','sb-sec-sistem'];
+    'mbtn-setting','sb-sec-laporan','sb-sec-sistem',
+    'sb-btn-upload','sb-sec-upload-label'];
   managerOnly.forEach(function(id){
     var el=document.getElementById(id);
     if(el) el.style.display=isManager?'':'none';
@@ -1778,12 +1855,13 @@ let currentSub  = 'maintenance';
 
 function switchMenu(menu){
   currentMenu=menu;
-  var titles={home:'Beranda',input:'Input Data',log:'Log Harian',report:'Report',setting:'Pengaturan'};
+  var titles={home:'Beranda',input:'Input Data',log:'Log Harian',report:'Report',setting:'Pengaturan',upload:'ITD Upload'};
   var el=document.getElementById('top-bar-title');if(el&&titles[menu])el.textContent=titles[menu];
   document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('active');});
   if(menu==='home'){var p=document.getElementById('pane-home');if(p)p.classList.add('active');}
   else if(menu==='log'){var p=document.getElementById('pane-log');if(p)p.classList.add('active');if(typeof loadLogHarian==='function')loadLogHarian();}
   else if(menu==='setting'){var p=document.getElementById('pane-setting');if(p)p.classList.add('active');var ac=document.getElementById('admin-card');if(ac)ac.style.display=currentRole==='manager'?'block':'none';}
+  else if(menu==='upload'){var p=document.getElementById('pane-upload');if(p)p.classList.add('active');loadBerkasList();}
   else if(menu==='input'){var subs=['maintenance','ots','pengajuan'];var s=subs.indexOf(currentSub)>=0?currentSub:'maintenance';switchSub(s,'input');}
   else if(menu==='report'){var subs=['rep-maintenance','rep-ots','rep-barang','rep-pengajuan','rep-absensi'];var s=subs.indexOf(currentSub)>=0?currentSub:'rep-maintenance';switchSub(s,'report');}
 }
@@ -5107,6 +5185,220 @@ async function savePengajuanEdit(id){
       showToast('Gagal: '+(json.message||'error'),'err');
     }
   } catch(e){hideOverlay();showToast('Gagal: '+e.message,'err');}
+}
+
+// ════════════════════════════════════════════════════════════
+//  ITD UPLOAD — Frontend JS
+// ════════════════════════════════════════════════════════════
+var _uploadFile = null;
+var _berkasAll  = [];
+
+var _FILE_ICONS = {
+  pdf:'📕', docx:'📘', doc:'📘', xlsx:'📗', xls:'📗',
+  pptx:'📙', ppt:'📙', txt:'📄', csv:'📊'
+};
+var _FILE_MIME = {
+  pdf:'application/pdf',
+  docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  doc:'application/msword',
+  xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  xls:'application/vnd.ms-excel',
+  pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  ppt:'application/vnd.ms-powerpoint',
+  txt:'text/plain',
+  csv:'text/csv'
+};
+
+function _getFileExt(name){ return (name.split('.').pop()||'').toLowerCase(); }
+function _getFileIcon(name){ return _FILE_ICONS[_getFileExt(name)]||'📄'; }
+function _formatSize(bytes){
+  if(bytes<1024) return bytes+'B';
+  if(bytes<1024*1024) return Math.round(bytes/1024)+'KB';
+  return (bytes/1024/1024).toFixed(1)+'MB';
+}
+
+function _handleUploadDrop(e){
+  e.preventDefault();
+  var dz = document.getElementById('upload-dropzone');
+  if(dz){ dz.style.borderColor='var(--border2)'; dz.style.background='var(--bg)'; }
+  var files = e.dataTransfer.files;
+  if(files&&files.length>0) _setUploadFile(files[0]);
+}
+
+function _onUploadFileSelected(input){
+  if(input.files&&input.files.length>0) _setUploadFile(input.files[0]);
+}
+
+function _setUploadFile(file){
+  _uploadFile = file;
+  var ext = _getFileExt(file.name);
+  var preview = document.getElementById('upload-file-preview');
+  document.getElementById('upload-file-icon').textContent = _getFileIcon(file.name);
+  document.getElementById('upload-file-name').textContent = file.name;
+  document.getElementById('upload-file-size').textContent = _formatSize(file.size)+' · '+ext.toUpperCase();
+  if(preview) preview.style.display='flex';
+  // Update dropzone
+  var dz = document.getElementById('upload-dropzone');
+  if(dz){ dz.style.borderColor='var(--accent)'; dz.style.background='rgba(59,130,246,0.03)'; }
+}
+
+function _clearUploadFile(){
+  _uploadFile = null;
+  var preview = document.getElementById('upload-file-preview');
+  if(preview) preview.style.display='none';
+  var input = document.getElementById('upload-file-input');
+  if(input) input.value='';
+  var dz = document.getElementById('upload-dropzone');
+  if(dz){ dz.style.borderColor='var(--border2)'; dz.style.background='var(--bg)'; }
+}
+
+function _setProgress(pct, msg){
+  var bar  = document.getElementById('upload-progress-bar');
+  var txt  = document.getElementById('upload-progress-text');
+  var wrap = document.getElementById('upload-progress');
+  if(wrap) wrap.style.display = pct>=0 ? 'block' : 'none';
+  if(bar)  bar.style.width = pct+'%';
+  if(txt)  txt.textContent = msg||'';
+}
+
+async function doUploadBerkas(){
+  var title = (document.getElementById('upload-title')?.value||'').trim();
+  if(!title){ showToast('Isi Judul / Kategori Dokumen dulu','info'); document.getElementById('upload-title')?.focus(); return; }
+  if(!_uploadFile){ showToast('Pilih file terlebih dahulu','info'); return; }
+
+  var maxSize = 15*1024*1024; // 15MB
+  if(_uploadFile.size > maxSize){ showToast('Ukuran file max 15MB','info'); return; }
+
+  var ext  = _getFileExt(_uploadFile.name);
+  var mime = _FILE_MIME[ext] || _uploadFile.type || 'application/octet-stream';
+
+  _setProgress(10,'Membaca file...');
+
+  try {
+    // Read as base64
+    var base64 = await new Promise(function(res,rej){
+      var reader = new FileReader();
+      reader.onload  = function(e){ res(e.target.result.split(',')[1]); };
+      reader.onerror = function(){ rej(new Error('Gagal baca file')); };
+      reader.readAsDataURL(_uploadFile);
+    });
+
+    _setProgress(35,'Mengirim ke Google Drive...');
+
+    var fd = new FormData();
+    fd.append('data', JSON.stringify({
+      action:    'uploadBerkas',
+      pin:       currentPin,
+      title:     title,
+      namaFile:  _uploadFile.name,
+      mimeType:  mime,
+      uploader:  (currentUser&&currentUser.name)||'Manager',
+      data:      base64
+    }));
+
+    _setProgress(60,'Menyimpan dan convert PDF...');
+
+    var res  = await fetch(getUrl(), {method:'POST', body:fd});
+    var json = await res.json();
+
+    _setProgress(100,'Selesai!');
+    setTimeout(function(){ _setProgress(-1,''); }, 1500);
+
+    if(json.status==='ok'){
+      showToast('Berkas berhasil diupload!','ok');
+      _clearUploadFile();
+      document.getElementById('upload-title').value='';
+      loadBerkasList();
+    } else {
+      showToast('Gagal: '+(json.message||'error'),'err');
+      _setProgress(-1,'');
+    }
+  } catch(e){
+    _setProgress(-1,'');
+    showToast('Gagal: '+e.message,'err');
+  }
+}
+
+async function loadBerkasList(){
+  var el = document.getElementById('berkas-list-content');
+  if(!el) return;
+  el.innerHTML='<div class="loading-text">⏳ Memuat daftar berkas...</div>';
+  try {
+    var json = await fetchGAS({action:'getBerkas', pin:currentPin});
+    if(json.status!=='ok'){ el.innerHTML='<div class="no-data">Gagal memuat data.</div>'; return; }
+    _berkasAll = json.data||[];
+    _renderBerkasList(_berkasAll);
+  } catch(e){
+    el.innerHTML='<div class="no-data">Gagal koneksi.</div>';
+  }
+}
+
+function _filterBerkas(){
+  var q = (document.getElementById('berkas-search')?.value||'').toLowerCase();
+  var filtered = !q ? _berkasAll : _berkasAll.filter(function(b){
+    return (b.title+b.namaFile).toLowerCase().indexOf(q)>=0;
+  });
+  _renderBerkasList(filtered);
+}
+
+function _renderBerkasList(list){
+  var el = document.getElementById('berkas-list-content');
+  if(!el) return;
+  if(!list||!list.length){
+    el.innerHTML='<div class="no-data"><div class="no-data-icon">📁</div>Tidak ada berkas ditemukan.</div>';
+    return;
+  }
+
+  // Group by title/folder
+  var groups = {};
+  list.forEach(function(b){
+    var g = b.title||'Lainnya';
+    if(!groups[g]) groups[g]=[];
+    groups[g].push(b);
+  });
+
+  var html = '';
+  Object.keys(groups).sort().forEach(function(grp){
+    html += '<div style="margin-bottom:18px;">';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;padding:6px 0 8px;border-bottom:1px solid var(--border);margin-bottom:8px;display:flex;align-items:center;gap:6px;">';
+    html += '<span style="font-size:14px;">📁</span> '+_esc(grp)+' <span style="font-weight:400;color:var(--text3);">('+groups[grp].length+' berkas)</span></div>';
+
+    groups[grp].forEach(function(b){
+      var icon = _getFileIcon(b.namaFile);
+      var hasPdf = b.pdfUrl && b.pdfUrl.length > 5;
+      html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:var(--radius-xs);background:var(--surface2);margin-bottom:6px;border:1px solid var(--border);">';
+      html += '<div style="font-size:24px;flex-shrink:0;line-height:1;">'+icon+'</div>';
+      html += '<div style="flex:1;min-width:0;">';
+      html += '<div style="font-size:13px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+_esc(b.namaFile)+'</div>';
+      html += '<div style="font-size:11px;color:var(--text3);margin-top:2px;">'+_esc(b.waktu)+' · '+b.sizeKB+' KB · '+_esc(b.uploader)+'</div>';
+      html += '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">';
+      if(b.fileUrl&&b.fileUrl.length>5)
+        html += '<a href="'+b.fileUrl+'" target="_blank" style="font-size:11px;padding:4px 10px;border-radius:99px;background:#e0f2fe;color:#0369a1;text-decoration:none;font-weight:600;">⬇ File Asli</a>';
+      if(hasPdf)
+        html += '<a href="'+b.pdfUrl+'" target="_blank" style="font-size:11px;padding:4px 10px;border-radius:99px;background:#fce7f3;color:#9d174d;text-decoration:none;font-weight:600;">📕 Lihat PDF</a>';
+      html += '<button onclick="_deleteBerkas(\''+b.id+'\')" style="font-size:11px;padding:4px 10px;border-radius:99px;background:#fee2e2;color:#b91c1c;border:none;cursor:pointer;font-weight:600;font-family:inherit;">🗑 Hapus</button>';
+      html += '</div></div></div>';
+    });
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function _deleteBerkas(id){
+  if(!confirm('Hapus berkas ini dari daftar? (File di Drive tidak ikut terhapus)')) return;
+  showOverlay('Menghapus...');
+  try {
+    var fd = new FormData();
+    fd.append('data', JSON.stringify({action:'deleteBerkas', pin:currentPin, id:id}));
+    var res  = await fetch(getUrl(),{method:'POST',body:fd});
+    var json = await res.json();
+    hideOverlay();
+    if(json.status==='ok'){ showToast('Berkas dihapus dari daftar','ok'); loadBerkasList(); }
+    else showToast('Gagal: '+(json.message||'error'),'err');
+  } catch(e){ hideOverlay(); showToast('Gagal: '+e.message,'err'); }
 }
 
 </script>
