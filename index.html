@@ -5395,6 +5395,7 @@ function _renderBerkasList(list){
         html += '<a href="'+b.fileUrl+'" target="_blank" style="font-size:11px;padding:4px 10px;border-radius:99px;background:#e0f2fe;color:#0369a1;text-decoration:none;font-weight:600;">⬇ File Asli</a>';
       if(hasPdf)
         html += '<a href="'+b.pdfUrl+'" target="_blank" style="font-size:11px;padding:4px 10px;border-radius:99px;background:#fce7f3;color:#9d174d;text-decoration:none;font-weight:600;">📕 Lihat PDF</a>';
+      html += '<button onclick="exportBerkasPDF(\''+b.id+'\')" style="font-size:11px;padding:4px 10px;border-radius:99px;background:#f3e8ff;color:#6d28d9;border:none;cursor:pointer;font-weight:600;font-family:inherit;">🖨️ Export PDF</button>';
       html += '<button onclick="_deleteBerkas(\''+b.id+'\')" style="font-size:11px;padding:4px 10px;border-radius:99px;background:#fee2e2;color:#b91c1c;border:none;cursor:pointer;font-weight:600;font-family:inherit;">🗑 Hapus</button>';
       html += '</div></div></div>';
     });
@@ -5610,6 +5611,72 @@ function _renderPicDashboard(d){
 }
 
 function _hesc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Export Berkas sebagai PDF ─────────────────────────────────────────────────
+function exportBerkasPDF(id) {
+  var b = _berkasAll.find(function(x){ return x.id === id; });
+  if (!b) { showToast('Data tidak ditemukan','info'); return; }
+
+  var logoB64 = typeof LOGO_KOP_B64 !== 'undefined' ? LOGO_KOP_B64 : '';
+  var tglFmt  = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  var icon    = _getFileIcon(b.namaFile);
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
+  html += '<title>Berkas \u2014 '+_esc(b.namaFile)+'</title>';
+  html += '<style>';
+  html += 'body{font-family:Arial,sans-serif;margin:0;padding:24px;color:#1a1a2e;font-size:13px;}';
+  html += '.kop{display:flex;align-items:center;gap:16px;border-bottom:3px solid #1e3a5f;padding-bottom:12px;margin-bottom:20px;}';
+  html += '.kop img{height:60px;width:auto;}';
+  html += '.kop-title{flex:1;}';
+  html += '.kop-title h2{margin:0;font-size:16px;color:#1e3a5f;}';
+  html += '.kop-title p{margin:2px 0;font-size:11px;color:#555;}';
+  html += '.badge{background:#1e3a5f;color:#fff;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700;display:inline-block;margin-bottom:16px;}';
+  html += '.info-grid{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;margin-bottom:20px;border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#f9fafb;}';
+  html += '.info-label{font-weight:700;color:#374151;}';
+  html += '.info-val{color:#111827;}';
+  html += '.links{margin-top:20px;padding:14px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe;}';
+  html += '.links a{display:block;font-size:12px;color:#1d4ed8;margin-bottom:6px;word-break:break-all;}';
+  html += '.footer{margin-top:32px;border-top:1px solid #e5e7eb;padding-top:10px;font-size:10px;color:#9ca3af;text-align:center;}';
+  html += '@media print{.no-print{display:none}body{padding:16px}}';
+  html += '</style></head><body>';
+
+  html += '<div class="kop">';
+  if (logoB64) html += '<img src="'+logoB64+'" alt="Logo">';
+  html += '<div class="kop-title">';
+  html += '<h2>CU KELING KUMANG \u2014 IT Departemen</h2>';
+  html += '<p>Dokumen Arsip Digital | Dicetak: '+tglFmt+'</p>';
+  html += '</div></div>';
+
+  html += '<div class="badge">\uD83D\uDCC1 ITD Upload \u2014 Arsip Berkas</div>';
+
+  html += '<div class="info-grid">';
+  html += '<span class="info-label">ID Berkas</span><span class="info-val">'+_esc(b.id)+'</span>';
+  html += '<span class="info-label">Judul / Kategori</span><span class="info-val">'+_esc(b.title)+'</span>';
+  html += '<span class="info-label">Nama File</span><span class="info-val">'+icon+' '+_esc(b.namaFile)+'</span>';
+  html += '<span class="info-label">Tipe</span><span class="info-val">'+_esc(b.tipe).toUpperCase()+'</span>';
+  html += '<span class="info-label">Ukuran</span><span class="info-val">'+b.sizeKB+' KB</span>';
+  html += '<span class="info-label">Folder</span><span class="info-val">'+_esc(b.folder)+'</span>';
+  html += '<span class="info-label">Diupload Oleh</span><span class="info-val">'+_esc(b.uploader)+'</span>';
+  html += '<span class="info-label">Waktu Upload</span><span class="info-val">'+_esc(b.waktu)+'</span>';
+  html += '</div>';
+
+  html += '<div class="links">';
+  html += '<strong style="font-size:12px;color:#1e3a5f;">\uD83D\uDD17 Akses File:</strong><br>';
+  if (b.fileUrl && b.fileUrl.length > 5) html += '<a href="'+b.fileUrl+'">\uD83D\uDCC4 File Asli: '+b.fileUrl+'</a>';
+  if (b.pdfUrl && b.pdfUrl.length > 5)  html += '<a href="'+b.pdfUrl+'">\uD83D\uDCD5 Versi PDF: '+b.pdfUrl+'</a>';
+  html += '</div>';
+
+  html += '<div class="footer">Dokumen ini digenerate otomatis oleh Sistem Informasi IT Departemen H&N \u2014 CU Keling Kumang</div>';
+  html += '<div class="no-print" style="margin-top:24px;text-align:center;">';
+  html += '<button onclick="window.print()" style="padding:10px 24px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">\uD83D\uDDB8 Print / Simpan PDF</button>';
+  html += '</div>';
+  html += '</body></html>';
+
+  var win = window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(function(){ win.print(); }, 600);
+}
 
 </script>
 </body>
