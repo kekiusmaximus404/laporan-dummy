@@ -601,6 +601,10 @@ body{margin:0;overflow-x:hidden;}
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
         <span class="sb-label">Pengajuan Barang</span>
       </button>
+      <button class="sb-item" onclick="currentMenu='report';switchSub('rep-absensi','report');setSbActive(this)">
+        <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <span class="sb-label">Rekap Absensi</span>
+      </button>
       <div class="sb-sec">Sistem</div>
       <button class="sb-item" id="mbtn-setting" onclick="switchMenu('setting');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -658,7 +662,7 @@ body{margin:0;overflow-x:hidden;}
 
       <!-- ── STEP 1: JENIS AKTIVITAS ── -->
       <div class="card">
-        <div class="card-title">Jenis Aktivitas</div>
+        <div class="card-title">Pilih Jenis Aktivitas</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:0;">
           <button id="act-tab-hw" onclick="selectActType('hw')" style="padding:10px 6px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
             <span style="font-size:18px;">🖥️</span>Perbaikan Hardware
@@ -669,6 +673,35 @@ body{margin:0;overflow-x:hidden;}
           <button id="act-tab-daily" onclick="selectActType('daily')" style="padding:10px 6px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;">
             <span style="font-size:18px;">📓</span>Daily Activity
           </button>
+        </div>
+      </div>
+
+      <!-- ── IDENTITAS (muncul setelah pilih tipe HW/Net) ── -->
+      <div id="act-identitas-card" class="card" style="display:none;">
+        <div class="card-title"><span class="dot" style="background:var(--text3)"></span>Identitas</div>
+        <div class="form-row">
+          <div class="form-group"><label>Nama PIC</label>
+            <select id="pic">
+              <option value="">— pilih —</option>
+              <option>Abet Nego</option>
+              <option>Goprid Tendo Padagi</option>
+              <option>Evan Budiargo</option>
+              <option>Herniumus Chandra</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Tanggal</label><input type="date" id="tgl"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Branch Office</label><input type="text" id="branch" placeholder="cth: Cabang Sudirman"></div>
+          <div class="form-group"><label>Area</label>
+            <select id="branch-kode">
+              <option value="">— pilih area —</option>
+              <option value="SINTANG1">Sintang 1</option><option value="SINTANG2">Sintang 2</option>
+              <option value="SEKADAU">Sekadau</option><option value="SANGGAU">Sanggau</option>
+              <option value="PONTIANAK">Pontianak Raya</option><option value="MELAWI">Melawi</option>
+              <option value="KAPUASHULU">Kapuas Hulu</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -740,35 +773,6 @@ body{margin:0;overflow-x:hidden;}
         <input type="hidden" id="daily-durasi" value="">
         <button class="btn-outline" onclick="addDaily()">+ Tambah aktivitas</button>
         <div id="daily-list"></div>
-      </div>
-
-      <!-- ── IDENTITAS (muncul setelah pilih tipe HW/Net) ── -->
-      <div id="act-identitas-card" class="card" style="display:none;">
-        <div class="card-title"><span class="dot" style="background:var(--text3)"></span>Identitas</div>
-        <div class="form-row">
-          <div class="form-group"><label>Nama PIC</label>
-            <select id="pic">
-              <option value="">— pilih —</option>
-              <option>Abet Nego</option>
-              <option>Goprid Tendo Padagi</option>
-              <option>Evan Budiargo</option>
-              <option>Herniumus Chandra</option>
-            </select>
-          </div>
-          <div class="form-group"><label>Tanggal</label><input type="date" id="tgl"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Branch Office</label><input type="text" id="branch" placeholder="cth: Cabang Sudirman"></div>
-          <div class="form-group"><label>Area</label>
-            <select id="branch-kode">
-              <option value="">— pilih area —</option>
-              <option value="SINTANG1">Sintang 1</option><option value="SINTANG2">Sintang 2</option>
-              <option value="SEKADAU">Sekadau</option><option value="SANGGAU">Sanggau</option>
-              <option value="PONTIANAK">Pontianak Raya</option><option value="MELAWI">Melawi</option>
-              <option value="KAPUASHULU">Kapuas Hulu</option>
-            </select>
-          </div>
-        </div>
       </div>
 
       <div style="display:flex;gap:10px;">
@@ -1036,13 +1040,13 @@ body{margin:0;overflow-x:hidden;}
     <div id="pane-rep-absensi" class="pane">
       <div class="container">
         <div class="card">
-          <div class="card-title"><span class="dot" style="background:#5b21b6;"></span>Laporan Absensi Bulanan</div>
+          <div class="card-title"><span class="dot" style="background:#5b21b6;"></span>Rekap Absensi Bulanan</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
             <div class="form-group">
               <label>Bulan</label>
               <select id="absen-filter-bulan" class="input-field">
                 <option>Januari</option><option>Februari</option><option>Maret</option>
-                <option>April</option><option selected>Mei</option><option>Juni</option>
+                <option>April</option><option>Mei</option><option>Juni</option>
                 <option>Juli</option><option>Agustus</option><option>September</option>
                 <option>Oktober</option><option>November</option><option>Desember</option>
               </select>
@@ -1056,14 +1060,14 @@ body{margin:0;overflow-x:hidden;}
             <label>PIC</label>
             <select id="absen-filter-pic" class="input-field">
               <option value="">Semua PIC</option>
-              <option>Ridwan</option><option>Abet Nego</option>
+              <option>Abet Nego</option>
               <option>Goprid Tendo Padagi</option><option>Evan Budiargo</option>
               <option>Herniumus Chandra</option>
             </select>
           </div>
-          <div style="display:flex;gap:10px;">
-            <button class="btn-primary" style="flex:1;margin-top:0;padding:10px;" onclick="loadAbsensi()">🔍 Tampilkan</button>
-            <button class="btn-export" onclick="exportAbsensi()" style="padding:10px 16px;margin-top:0;">📥 Export Excel</button>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-primary" style="flex:1;min-width:120px;margin-top:0;padding:10px;" onclick="loadAbsensi()">🔍 Tampilkan Preview</button>
+            <button class="btn-export" onclick="exportAbsensiServer()" style="padding:10px 16px;margin-top:0;">📥 Export Excel</button>
           </div>
         </div>
         <div id="absensi-content"><div class="no-data"><div class="no-data-icon">📋</div>Pilih filter lalu tekan Tampilkan.</div></div>
@@ -1691,6 +1695,15 @@ function switchSub(sub,menu){
   if(sub==='rep-barang'){var e=document.getElementById('report-barang-content');if(e)e.innerHTML='<div class="no-data"><div class="no-data-icon">📦</div>Pilih filter lalu tekan Tampilkan.</div>';}
   if(sub==='pengajuan'){var t=document.getElementById('pjn-tgl');if(t&&!t.value)t.valueAsDate=new Date();if(typeof renderPjnItems==='function')renderPjnItems();}
   if(sub==='rep-absensi'){const b=document.getElementById('absen-filter-bulan');const BN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];if(b)b.value=BN[new Date().getMonth()];}
+  if(sub==='maintenance'){
+    // Pastikan semua panel tersembunyi saat pertama masuk — user harus pilih jenis aktivitas dulu
+    ['hw','net','daily'].forEach(function(x){
+      var panel=document.getElementById('act-panel-'+x);if(panel)panel.style.display='none';
+      var tab=document.getElementById('act-tab-'+x);
+      if(tab){tab.style.borderColor='var(--border2)';tab.style.color='var(--text2)';tab.style.background='var(--surface2)';}
+    });
+    var idCard=document.getElementById('act-identitas-card');if(idCard)idCard.style.display='none';
+  }
 }
 
 
@@ -1773,6 +1786,11 @@ function resetForm(){
   if(branchEl) branchEl.value = '';
   const kodeEl = document.getElementById('branch-kode');
   if(kodeEl) kodeEl.value = '';
+  // Reset daily identitas
+  const dpicEl = document.getElementById('daily-pic');
+  if(dpicEl) dpicEl.value = '';
+  const dtglEl = document.getElementById('daily-tgl');
+  if(dtglEl) dtglEl.value = '';
   // Reset tiket
   hwItems = []; netItems = []; dailyItems=[];
   renderTemp('hw-list', hwItems, 'hw');
@@ -1787,6 +1805,15 @@ function resetForm(){
   if(hwStatus) hwStatus.value = 'Selesai';
   const netStatus = document.getElementById('net-status');
   if(netStatus) netStatus.value = 'Selesai';
+  // Reset panel aktivitas — semua tersembunyi, identitas tersembunyi
+  ['hw','net','daily'].forEach(function(x){
+    const tab = document.getElementById('act-tab-'+x);
+    const panel = document.getElementById('act-panel-'+x);
+    if(tab){tab.style.borderColor='var(--border2)';tab.style.color='var(--text2)';tab.style.background='var(--surface2)';}
+    if(panel) panel.style.display='none';
+  });
+  const idCard = document.getElementById('act-identitas-card');
+  if(idCard) idCard.style.display = 'none';
   // Reset mode edit
   editingLogId = null;
   window._editingTicket = null;
@@ -1980,16 +2007,37 @@ function refreshLogTab(){
 // ── Export OTS ke Excel ──────────────────────────────────────────────────────
 async function exportOTSExcel(){
   const bulan = document.getElementById('ots-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
-  const tahun = new Date().getFullYear();
-  showOverlay('Menyiapkan file Excel OTS...');
+  const tahun = String(new Date().getFullYear());
+  showOverlay('Menyiapkan file Excel OTS — ambil data dari Drive...');
   try {
-    const json = await fetchGAS({action:'exportOTS', bulan, tahun: String(tahun), pin: currentPin});
+    const json = await fetchGAS({action:'exportOTS', bulan, tahun, pin: currentPin});
     hideOverlay();
     if(json.status === 'ok' && json.data?.url){
-      showToast('File siap! Mengunduh...', 'ok');
+      showToast('File siap! Klik untuk download', 'ok');
       window.open(json.data.url, '_blank');
     } else {
-      showToast(json.data?.message || 'Gagal export', 'err');
+      showToast((json.data?.message) || 'Tidak ada data OTS periode ini', 'info');
+    }
+  } catch(e){
+    hideOverlay();
+    showToast('Gagal: ' + e.message, 'err');
+  }
+}
+
+// ── Export Absensi via server (GAS generate Excel) ───────────────────────────
+async function exportAbsensiServer(){
+  const bulan = document.getElementById('absen-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
+  const tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
+  const pic   = document.getElementById('absen-filter-pic')?.value  || '';
+  showOverlay('Membuat file Excel Absensi di Google Drive...');
+  try {
+    const json = await fetchGAS({action:'exportAbsensi', bulan, tahun, pic, pin: currentPin});
+    hideOverlay();
+    if(json.status === 'ok' && json.data?.url){
+      showToast('File Excel siap!', 'ok');
+      window.open(json.data.url, '_blank');
+    } else {
+      showToast((json.data?.message) || 'Tidak ada data untuk periode ini', 'info');
     }
   } catch(e){
     hideOverlay();
