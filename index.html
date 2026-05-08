@@ -549,7 +549,7 @@ body{margin:0;overflow-x:hidden;}
     <div class="login-logo">H&N</div>
     <div class="login-sub">Laporan Harian Tim Jaringan &amp; Hardware</div>
     <label class="login-label">Masukkan PIN Akses</label>
-    <input type="password" class="pin-input" id="pin-input" maxlength="6" placeholder="••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="password" class="pin-input" id="pin-input" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn-login" onclick="doLogin()">Masuk</button>
     <div class="login-err" id="login-err"></div>
   </div>
@@ -580,16 +580,16 @@ body{margin:0;overflow-x:hidden;}
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
         <span class="sb-label">Pengajuan</span>
       </button>
-      <div class="sb-sec">Log & Laporan</div>
+      <div class="sb-sec" id="sb-sec-laporan">Log & Laporan</div>
       <button class="sb-item" id="mbtn-log" onclick="switchMenu('log');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         <span class="sb-label">Log Harian</span>
       </button>
-      <button class="sb-item" onclick="currentMenu='report';switchSub('rep-maintenance','report');setSbActive(this)">
+      <button id="sb-btn-rep-maintenance" class="sb-item" onclick="currentMenu='report';switchSub('rep-maintenance','report');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         <span class="sb-label">Report Maintenance</span>
       </button>
-      <button class="sb-item" onclick="currentMenu='report';switchSub('rep-ots','report');setSbActive(this)">
+      <button id="sb-btn-rep-ots" class="sb-item" onclick="currentMenu='report';switchSub('rep-ots','report');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
         <span class="sb-label">Report OTS</span>
       </button>
@@ -601,12 +601,12 @@ body{margin:0;overflow-x:hidden;}
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
         <span class="sb-label">Pengajuan Barang</span>
       </button>
-      <button class="sb-item" onclick="currentMenu='report';switchSub('rep-absensi','report');setSbActive(this)">
+      <button id="sb-btn-rep-absensi" class="sb-item" onclick="currentMenu='report';switchSub('rep-absensi','report');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         <span class="sb-label">Rekap Absensi</span>
       </button>
-      <div class="sb-sec">Sistem</div>
-      <button class="sb-item" id="mbtn-setting" onclick="switchMenu('setting');setSbActive(this)">
+      <div class="sb-sec" id="sb-sec-sistem">Sistem</div>
+      <button id="mbtn-setting" class="sb-item" onclick="switchMenu('setting');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
         <span class="sb-label">Pengaturan</span>
       </button>
@@ -793,10 +793,9 @@ body{margin:0;overflow-x:hidden;}
       <div style="display:flex;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap;">
         <button class="sub-btn active" id="log-tab-maintenance" onclick="switchLogTab('maintenance')">🔧 Maintenance</button>
         <button class="sub-btn" id="log-tab-ots" onclick="switchLogTab('ots')">📋 OTS</button>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <input type="date" id="log-filter-tgl" style="padding:7px 10px;border:1.5px solid var(--border2);border-radius:var(--radius-xs);font-size:12px;font-family:inherit;background:var(--surface);" onchange="refreshLogTab()">
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+          <input type="date" id="log-filter-tgl" style="padding:7px 10px;border:1.5px solid var(--border2);border-radius:var(--radius-xs);font-size:12px;font-family:inherit;background:var(--surface);color:var(--text1);" onchange="refreshLogTab()">
           <button class="btn-refresh" onclick="refreshLogTab()">🔄 Refresh</button>
-
         </div>
       </div>
       <!-- LOG MAINTENANCE -->
@@ -1282,15 +1281,15 @@ body{margin:0;overflow-x:hidden;}
       </div>
       <div class="form-group" style="margin-bottom:12px;">
         <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px;">PIN Lama</label>
-        <input type="password" id="pwd-modal-old" placeholder="PIN saat ini" class="input-field" style="margin:0;">
+        <input type="password" id="pwd-modal-old" placeholder="PIN saat ini (4 digit)" class="input-field" style="margin:0;" maxlength="4" inputmode="numeric">
       </div>
       <div class="form-group" style="margin-bottom:12px;">
         <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px;">PIN Baru</label>
-        <input type="password" id="pwd-modal-new" placeholder="Min. 4 karakter" class="input-field" style="margin:0;" autocomplete="new-password">
+        <input type="password" id="pwd-modal-new" placeholder="PIN baru (4 digit)" class="input-field" style="margin:0;" maxlength="4" inputmode="numeric" autocomplete="new-password">
       </div>
       <div class="form-group" style="margin-bottom:8px;">
         <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px;">Konfirmasi PIN Baru</label>
-        <input type="password" id="pwd-modal-new2" placeholder="Ulangi PIN baru" class="input-field" style="margin:0;" autocomplete="new-password">
+        <input type="password" id="pwd-modal-new2" placeholder="Ulangi PIN baru (4 digit)" class="input-field" style="margin:0;" maxlength="4" inputmode="numeric" autocomplete="new-password">
       </div>
       <div id="pwd-err" style="color:#ef4444;font-size:12px;min-height:16px;margin-bottom:10px;"></div>
       <div style="display:flex;gap:8px;">
@@ -1393,22 +1392,34 @@ function openChangePwd(){
   var el=document.getElementById('pwd-modal');if(el)el.style.display='flex';
 }
 function closePwdModal(){var el=document.getElementById('pwd-modal');if(el)el.style.display='none';}
-function saveChangePwd(){
+async function saveChangePwd(){
   var old=document.getElementById('pwd-modal-old').value.trim();
   var np=document.getElementById('pwd-modal-new').value.trim();
   var np2=document.getElementById('pwd-modal-new2').value.trim();
   var errEl=document.getElementById('pwd-err');
+  errEl.textContent='';
   if(old!==currentPin){errEl.textContent='PIN lama salah.';return;}
-  if(!np||np.length<4){errEl.textContent='PIN baru min. 4 karakter.';return;}
-  if(np!==np2){errEl.textContent='PIN baru tidak cocok.';return;}
-  var users=getUsers();
-  var dup=users.findIndex(function(u){return u.pin===np&&u.pin!==currentPin;});
-  if(dup>=0){errEl.textContent='PIN sudah digunakan.';return;}
-  var idx=users.findIndex(function(u){return u.pin===currentPin;});
-  if(idx<0){errEl.textContent='User tidak ditemukan.';return;}
-  users[idx].pin=np;saveUsers(users);currentPin=np;if(currentUser)currentUser.pin=np;
-  localStorage.setItem('hn_pin',np);localStorage.setItem('hn_user',JSON.stringify(currentUser));
-  closePwdModal();showToast('Password berhasil diubah','ok');
+  if(!np||np.length!==4||!/^\d{4}$/.test(np)){errEl.textContent='PIN baru harus 4 digit angka.';return;}
+  if(np!==np2){errEl.textContent='Konfirmasi PIN tidak cocok.';return;}
+  if(np===old){errEl.textContent='PIN baru tidak boleh sama dengan PIN lama.';return;}
+  showOverlay('Menyimpan PIN baru...');
+  try {
+    const fd=new FormData();
+    fd.append('data',JSON.stringify({action:'updatePin',pin:currentPin,oldPin:old,newPin:np}));
+    const res=await fetch(getUrl(),{method:'POST',body:fd});
+    const json=await res.json();
+    hideOverlay();
+    if(json.status==='ok'){
+      currentPin=np;
+      if(currentUser)currentUser.pin=np;
+      localStorage.setItem('hn_pin',np);
+      localStorage.setItem('hn_user',JSON.stringify(currentUser));
+      closePwdModal();
+      showToast('PIN berhasil diubah','ok');
+    } else {
+      errEl.textContent=json.message||'Gagal menyimpan PIN.';
+    }
+  } catch(e){hideOverlay();errEl.textContent='Gagal koneksi server.';}
 }
 async function compressImage(file){
   return new Promise(function(res){
@@ -1468,13 +1479,34 @@ function selectActType(t){
       if(panel)panel.style.display='none';
     }
   });
-  // Tampilkan kartu identitas hanya untuk HW dan Net
   const idCard = document.getElementById('act-identitas-card');
   if(idCard) idCard.style.display = (t==='daily') ? 'none' : 'block';
-  // Pre-fill tanggal daily
-  if(t==='daily'){const dt=document.getElementById('daily-tgl');if(dt&&!dt.value)dt.valueAsDate=new Date();}
-  // Pre-fill tanggal identitas
-  if(t!=='daily'){const tg=document.getElementById('tgl');if(tg&&!tg.value)tg.valueAsDate=new Date();}
+
+  // Re-apply PIC lock setiap kali panel dibuka
+  _applyPicLock();
+
+  // Batasan tanggal: non-manager max hari ini, min 3 hari kebelakang
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0,10);
+  const minDate = currentRole==='manager' ? '' : (()=>{
+    const d=new Date(today); d.setDate(d.getDate()-3); return d.toISOString().slice(0,10);
+  })();
+
+  if(t==='daily'){
+    const dt=document.getElementById('daily-tgl');
+    if(dt){
+      dt.max=todayStr;
+      if(minDate) dt.min=minDate;
+      if(!dt.value) dt.value=todayStr;
+    }
+  } else {
+    const tg=document.getElementById('tgl');
+    if(tg){
+      tg.max=todayStr;
+      if(minDate) tg.min=minDate;
+      if(!tg.value) tg.value=todayStr;
+    }
+  }
 }
 
 function addDaily(){
@@ -1560,27 +1592,72 @@ async function fetchGAS(params) {
 }
 
 // ---- LOGIN ---- PIN dicek lokal, tidak perlu server
-const DEFAULT_USERS=[
-  {pin:'1234',name:'Manager H&N',role:'manager',enabled:true},
-  {pin:'5678',name:'Abet Nego',role:'pic',enabled:true},
-  {pin:'5679',name:'Goprid Tendo Padagi',role:'pic',enabled:true},
-  {pin:'5680',name:'Evan Budiargo',role:'pic',enabled:true},
-  {pin:'5681',name:'Herniumus Chandra',role:'pic',enabled:true}
-];
-function getUsers(){try{var s=localStorage.getItem('hn_users');if(s)return JSON.parse(s);}catch(e){}localStorage.setItem('hn_users',JSON.stringify(DEFAULT_USERS));return DEFAULT_USERS.slice();}
-function saveUsers(u){localStorage.setItem('hn_users',JSON.stringify(u));}
-function findUser(pin){return getUsers().find(function(u){return u.pin===pin&&u.enabled;})||null;}
-let currentUser=null;
+// ── User dari GAS Sheet (bukan localStorage) ─────────────────────────────────
+let _usersCache = null;   // cache setelah login berhasil
+let currentUser = null;
 
-function doLogin(){
+// Fetch user list dari GAS (dipanggil saat login)
+async function _fetchUsers(){
+  if(!_usersCache){
+    try {
+      const url = getUrl();
+      if(!url) return [];
+      const res = await fetch(url+'?action=getUsers&pin='+encodeURIComponent(document.getElementById('pin-input').value.trim())+'&callback=');
+      // pakai fetchGAS setelah URL tersedia
+    } catch(e){}
+  }
+  return _usersCache||[];
+}
+
+// Simpan user cache lokal (hanya nama+role, tidak simpan PIN orang lain)
+function _cacheMyUser(user){ localStorage.setItem('hn_user',JSON.stringify(user)); }
+
+// Untuk admin page — ambil dari GAS
+async function getUsers(){
+  if(_usersCache) return _usersCache;
+  if(!getUrl()) return [];
+  try {
+    const json = await fetchGAS({action:'getUsers', pin:currentPin});
+    if(json.status==='ok') _usersCache = json.data||[];
+  } catch(e){}
+  return _usersCache||[];
+}
+
+function saveUsers(u){ /* deprecated - edit lewat admin panel GAS */ }
+function findUser(pin){ return null; /* login langsung ke GAS */ }
+
+async function doLogin(){
   const pin = document.getElementById('pin-input').value.trim();
   const err = document.getElementById('login-err');
-  if(!pin){ err.textContent='Masukkan PIN dulu'; return; }
-  var user=findUser(pin);
-  if(!user){var all=getUsers(),ex=all.find(function(u){return u.pin===pin;});err.textContent=ex?'Akun dinonaktifkan.':'PIN salah.';document.getElementById('pin-input').value='';return;}
-  currentUser=user;currentRole=user.role;currentPin=user.pin;
-  localStorage.setItem('hn_pin',pin);localStorage.setItem('hn_role',user.role);localStorage.setItem('hn_user',JSON.stringify(user));
-  showApp();
+  if(!pin){ err.textContent='Masukkan PIN dulu.'; return; }
+  if(pin.length !== 4){ err.textContent='PIN harus 4 digit.'; return; }
+  if(!/^\d{4}$/.test(pin)){ err.textContent='PIN hanya angka.'; return; }
+
+  const url = getUrl();
+  if(!url){
+    err.textContent='URL Script belum diset. Buka Pengaturan dulu.';
+    return;
+  }
+  err.textContent='⏳ Memeriksa...';
+  try {
+    const json = await fetchGAS({action:'getUserByPin', pin});
+    if(json.status!=='ok'||!json.data){
+      err.textContent='PIN salah atau akun tidak aktif.';
+      document.getElementById('pin-input').value='';
+      return;
+    }
+    const user = json.data;
+    if(!user.enabled){ err.textContent='Akun dinonaktifkan.'; document.getElementById('pin-input').value=''; return; }
+    currentUser={pin, name:user.name, role:user.role, enabled:true};
+    currentRole=user.role; currentPin=pin;
+    localStorage.setItem('hn_pin',pin);
+    localStorage.setItem('hn_role',user.role);
+    _cacheMyUser(currentUser);
+    err.textContent='';
+    showApp();
+  } catch(e){
+    err.textContent='Gagal koneksi ke server.';
+  }
 }
 
 function doLogout(){
@@ -1601,7 +1678,19 @@ function showApp(){
   var _nm=document.getElementById('sb-uname');if(_nm)_nm.textContent=(currentUser&&currentUser.name)||(currentRole==='manager'?'Manager':'PIC');
   var _dt=document.getElementById('top-bar-date');if(_dt)_dt.textContent=new Date().toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
   var ac=document.getElementById('admin-card');if(ac)ac.style.display=currentRole==='manager'?'block':'none';
-  ['sb-btn-pengajuan','sb-btn-rep-barang','sb-btn-rep-pengajuan'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=currentRole==='manager'?'':'none';});
+  // Manager: semua menu tampil. Non-manager: hanya Maintenance, Form OTS, Log Harian
+  var isManager = currentRole === 'manager';
+  var managerOnly = ['sb-btn-pengajuan','sb-btn-rep-barang','sb-btn-rep-pengajuan',
+    'sb-btn-rep-maintenance','sb-btn-rep-ots','sb-btn-rep-absensi',
+    'mbtn-setting','sb-sec-laporan','sb-sec-sistem'];
+  managerOnly.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.style.display=isManager?'':'none';
+  });
+  // Log Harian (mbtn-log) tetap tampil untuk semua
+  var logBtn=document.getElementById('mbtn-log');if(logBtn)logBtn.style.display='';
+  // Lock PIC selects untuk non-manager
+  _applyPicLock();
 
   // Role-based visibility
   const mbtnSetting = document.getElementById('mbtn-setting');
@@ -1645,13 +1734,29 @@ function showApp(){
 
 // Auto login jika pin masih tersimpan
 window.onload = function(){
+  (async function(){
   const savedPin  = localStorage.getItem('hn_pin');
   const savedRole = localStorage.getItem('hn_role');
   const savedUrl  = getUrl();
 
-  var savedUser2=savedPin?findUser(savedPin):null;
-  var pinValid=!!savedUser2;
-  if(pinValid&&savedUrl){currentUser=savedUser2;currentPin=savedPin;currentRole=savedUser2.role;showApp();}
+  var savedUser2=savedPin?{pin:savedPin,role:savedRole||'pic',name:'',enabled:true}:null;
+  try{var _su=localStorage.getItem('hn_user');if(_su)savedUser2=JSON.parse(_su);}catch(e){}
+  var pinValid=!!savedPin&&!!savedUrl;
+  if(pinValid&&savedUrl){
+    // Re-verify against GAS on page reload
+    try {
+      const _vj = await fetchGAS({action:'getUserByPin', pin:savedPin});
+      if(_vj.status==='ok'&&_vj.data&&_vj.data.enabled){
+        currentUser={pin:savedPin,name:_vj.data.name,role:_vj.data.role,enabled:true};
+        currentPin=savedPin;currentRole=_vj.data.role;
+        _cacheMyUser(currentUser);
+        showApp();
+      } else { localStorage.removeItem('hn_pin'); localStorage.removeItem('hn_role'); }
+    } catch(e){
+      // Fallback: pakai cache lokal jika GAS tidak bisa diakses
+      if(savedUser2){currentUser=savedUser2;currentPin=savedPin;currentRole=savedUser2.role;showApp();}
+    }
+  }
   else {
     if(savedPin&&!pinValid){localStorage.removeItem('hn_pin');localStorage.removeItem('hn_role');localStorage.removeItem('hn_user');}
     const subInput = document.getElementById('sub-input');
@@ -1663,6 +1768,7 @@ window.onload = function(){
   // Init tanggal OTS
   const otsDateEl = document.getElementById('ots-tgl');
   if(otsDateEl) otsDateEl.valueAsDate = new Date();
+  })(); // end async IIFE
 };
 
 // ---- TABS ----
@@ -1826,6 +1932,16 @@ function resetForm(){
 
 // ---- SIMPAN & KIRIM ----
 async function simpanDanKirim(){
+  // Validasi tanggal: non-manager hanya boleh 3 hari ke belakang
+  function _validateTgl(tglStr){
+    if(currentRole==='manager') return true;
+    const d = new Date(tglStr);
+    const today = new Date(); today.setHours(23,59,59,0);
+    const minD  = new Date(); minD.setDate(minD.getDate()-3); minD.setHours(0,0,0,0);
+    if(d > today){ showToast('Tanggal tidak boleh lebih dari hari ini','info'); return false; }
+    if(d < minD){  showToast('Hanya bisa input maksimal 3 hari ke belakang. Hubungi Manager untuk perubahan lebih lama.','info'); return false; }
+    return true;
+  }
   // Jika hanya daily activity, validasi lebih ringan
   const onlyDaily = !hwItems.length && !netItems.length && dailyItems.length > 0;
 
@@ -1838,6 +1954,7 @@ async function simpanDanKirim(){
     branchKode = '';
     if(!pic){ showToast('Pilih nama PIC dulu','info'); return; }
     if(!tgl){ showToast('Pilih tanggal dulu','info'); return; }
+    if(!_validateTgl(tgl)) return;
   } else {
     pic    = document.getElementById('pic').value;
     tgl    = document.getElementById('tgl').value;
@@ -1845,6 +1962,7 @@ async function simpanDanKirim(){
     branchKode = document.getElementById('branch-kode').value;
     if(!pic){ showToast('Pilih nama PIC dulu','info'); return; }
     if(!tgl){ showToast('Pilih tanggal dulu','info'); return; }
+    if(!_validateTgl(tgl)) return;
     if(!branch){ showToast('Isi Branch Office dulu','info'); return; }
   }
 
@@ -2005,43 +2123,105 @@ function refreshLogTab(){
 }
 
 // ── Export OTS ke Excel ──────────────────────────────────────────────────────
+// ── Export OTS → download langsung ke komputer (XLSX.js) ─────────────────────
 async function exportOTSExcel(){
   const bulan = document.getElementById('ots-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
   const tahun = String(new Date().getFullYear());
-  showOverlay('Menyiapkan file Excel OTS — ambil data dari Drive...');
+  showOverlay('Mengambil data OTS...');
   try {
-    const json = await fetchGAS({action:'exportOTS', bulan, tahun, pin: currentPin});
+    const json = await fetchGAS({action:'getOTS', pin:currentPin, bulan});
     hideOverlay();
-    if(json.status === 'ok' && json.data?.url){
-      showToast('File siap! Klik untuk download', 'ok');
-      window.open(json.data.url, '_blank');
-    } else {
-      showToast((json.data?.message) || 'Tidak ada data OTS periode ini', 'info');
+    if(json.status!=='ok'||!json.data?.length){
+      showToast('Tidak ada data OTS periode ini','info'); return;
     }
+    showOverlay('Menyusun Excel OTS...');
+    const wb = XLSX.utils.book_new();
+
+    // Sheet Rekap
+    const rekapRows = [];
+    for(const r of json.data){
+      // Ambil detail kegiatan dari Drive
+      let kegText = 'Kunjungan OTS ke '+(r.bo||'').toUpperCase();
+      try {
+        const det = await fetchGAS({action:'getOTSDetail', id:r.id, pin:currentPin});
+        if(det.status==='ok' && det.data?.kegiatan?.length){
+          kegText = (r.bo||'').toUpperCase()+': '+det.data.kegiatan.map(k=>{
+            let t=(k.kegiatan||'').trim();
+            if(k.hasil&&k.hasil.trim()) t+=', '+k.hasil.trim();
+            return t;
+          }).filter(Boolean).join(', ');
+        }
+      } catch(e){}
+      const tglFmt = r.tgl ? new Date(r.tgl).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}) : r.tgl;
+      const timArr = Array.isArray(r.timIT) ? r.timIT.join(', ') : (r.timIT||'');
+      rekapRows.push({
+        'Tanggal': tglFmt,
+        'Branch Office': r.bo||'',
+        'Tim IT': timArr,
+        'Kegiatan': kegText,
+        'Petugas BO': r.namaBo||r.petugasBO||'',
+        'Jabatan BO': r.jabatanBo||'',
+        'Jml Kegiatan': r.jumlahKegiatan||'',
+        'Serah Terima': r.adaSerah?'Ya':'Tidak',
+      });
+    }
+    const ws = XLSX.utils.json_to_sheet(rekapRows);
+    // Set col widths
+    ws['!cols']=[{wch:18},{wch:22},{wch:28},{wch:55},{wch:22},{wch:18},{wch:12},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,'Laporan OTS '+bulan+' '+tahun,ws);
+
+    const fname = 'Laporan_OTS_'+bulan+'_'+tahun+'.xlsx';
+    hideOverlay();
+    XLSX.writeFile(wb, fname);
+    showToast('File '+fname+' diunduh!','ok');
   } catch(e){
     hideOverlay();
-    showToast('Gagal: ' + e.message, 'err');
+    showToast('Gagal: '+e.message,'err');
   }
 }
 
-// ── Export Absensi via server (GAS generate Excel) ───────────────────────────
+// ── Export Absensi → download langsung ke komputer (XLSX.js) ─────────────────
 async function exportAbsensiServer(){
   const bulan = document.getElementById('absen-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
   const tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
   const pic   = document.getElementById('absen-filter-pic')?.value  || '';
-  showOverlay('Membuat file Excel Absensi di Google Drive...');
+  showOverlay('Mengambil data absensi...');
   try {
-    const json = await fetchGAS({action:'exportAbsensi', bulan, tahun, pic, pin: currentPin});
+    const json = await fetchGAS({action:'generateAbsensi', bulan, tahun, pic, pin:currentPin});
     hideOverlay();
-    if(json.status === 'ok' && json.data?.url){
-      showToast('File Excel siap!', 'ok');
-      window.open(json.data.url, '_blank');
-    } else {
-      showToast((json.data?.message) || 'Tidak ada data untuk periode ini', 'info');
+    if(json.status!=='ok'||!json.data?.length){
+      showToast('Tidak ada data absensi untuk periode ini','info'); return;
     }
+    const wb = XLSX.utils.book_new();
+    const HARI_COLOR={'Sabtu':'FFE3F2FD','Minggu':'FFFCE4EC'};
+
+    for(const picData of json.data){
+      const rows = picData.rows.map(r=>({
+        'Hari': r.hari||'',
+        'Tanggal': r.tgl ? new Date(r.tgl).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}) : '',
+        'Kegiatan / Keterangan': _formatKegiatanHuman(r.kegiatan||''),
+        'Lokasi PIC': r.lokasi||'',
+        'Status': r.status||''
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws['!cols']=[{wch:10},{wch:18},{wch:60},{wch:22},{wch:8}];
+      // Color header row
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for(let C=range.s.c; C<=range.e.c; C++){
+        const hdr = XLSX.utils.encode_cell({r:0,c:C});
+        if(!ws[hdr]) continue;
+        ws[hdr].s={fill:{fgColor:{rgb:'FF1E3A5F'}},font:{color:{rgb:'FFFFFFFF'},bold:true}};
+      }
+      const shName = (picData.pic.split(' ')[0]+'_'+bulan).substring(0,31);
+      XLSX.utils.book_append_sheet(wb, shName, ws);
+    }
+
+    const fname = 'Absensi_'+bulan+'_'+tahun+(pic?'_'+pic.split(' ')[0]:'')+'.xlsx';
+    XLSX.writeFile(wb, fname);
+    showToast('File '+fname+' diunduh!','ok');
   } catch(e){
     hideOverlay();
-    showToast('Gagal: ' + e.message, 'err');
+    showToast('Gagal: '+e.message,'err');
   }
 }
 
@@ -4702,6 +4882,39 @@ async function deleteNota(id, idx){
 }
 
 // ── ABSENSI Preview ──────────────────────────────────────────────────────────
+// ── PIC Lock: non-manager hanya lihat nama sendiri ──────────────────────────
+function _applyPicLock(){
+  var isManager = currentRole === 'manager';
+  var myName = (currentUser && currentUser.name) || '';
+  var picSelects = ['pic','daily-pic'];
+  picSelects.forEach(function(id){
+    var sel = document.getElementById(id);
+    if(!sel) return;
+    if(isManager){
+      sel.disabled = false;
+      sel.style.backgroundColor = '';
+      sel.style.cursor = '';
+    } else {
+      // Set value ke nama sendiri dan lock
+      sel.value = myName;
+      // Kalau nama tidak ada di option, tambahkan
+      var found = false;
+      for(var i=0;i<sel.options.length;i++){
+        if(sel.options[i].value === myName || sel.options[i].text === myName){ found=true; break; }
+      }
+      if(!found){
+        var opt = document.createElement('option');
+        opt.value = myName; opt.text = myName;
+        sel.appendChild(opt);
+        sel.value = myName;
+      }
+      sel.disabled = true;
+      sel.style.backgroundColor = 'var(--surface3)';
+      sel.style.cursor = 'not-allowed';
+    }
+  });
+}
+
 async function loadAbsensi(){
   var bulan = document.getElementById('absen-filter-bulan')?.value || '';
   var tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
