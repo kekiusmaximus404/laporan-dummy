@@ -5319,7 +5319,12 @@ async function doUploadBerkas(){
     setTimeout(function(){ _setProgress(-1,''); }, 1500);
 
     if(json.status==='ok'){
-      showToast('Berkas berhasil diupload!','ok');
+      var pdfOk = json.data && json.data.pdfUrl && json.data.pdfUrl.length > 5;
+      if(pdfOk){
+        showToast('✅ Upload berhasil + PDF tersimpan!','ok');
+      } else {
+        showToast('✅ Upload berhasil. PDF sedang diproses atau format tidak didukung.','ok');
+      }
       _clearUploadFile();
       document.getElementById('upload-title').value='';
       loadBerkasList();
