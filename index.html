@@ -2366,52 +2366,37 @@ async function exportOTSExcel(){
 async function exportAbsensiServer(){
   const bulan = document.getElementById('absen-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
   const tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
-  // Non-manager hanya bisa export data sendiri
-  const pic = currentRole==='manager'
+  const pic   = currentRole==='manager'
     ? (document.getElementById('absen-filter-pic')?.value||'')
     : ((currentUser&&currentUser.name)||'');
-  showOverlay('Mengambil data absensi...');
+
+  showOverlay('Menyiapkan Excel Absensi...');
   try {
-    const json = await fetchGAS({action:'generateAbsensi', bulan, tahun, pic, pin:currentPin});
+    // POST ke GAS — GAS build xlsx server-side, return base64
+    const fd = new FormData();
+    fd.append('data', JSON.stringify({
+      action:'exportAbsensiExcel', pin:currentPin,
+      bulan, tahun, pic
+    }));
+    const res  = await fetch(getUrl(), {method:'POST', body:fd});
+    const json = await res.json();
     hideOverlay();
-    if(json.status!=='ok'||!json.data?.length){
-      showToast('Tidak ada data absensi untuk periode ini','info'); return;
-    }
-    const wb = XLSX.utils.book_new();
-    const HARI_COLOR={'Sabtu':'FFE3F2FD','Minggu':'FFFCE4EC'};
 
-    for(const picData of json.data){
-      const rows = picData.rows.map(r=>({
-        'Hari': r.hari||'',
-        'Tanggal': r.tgl ? new Date(r.tgl).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}) : '',
-        'Kegiatan / Keterangan': _formatKegiatanHuman(r.kegiatan||''),
-        'Lokasi PIC': r.lokasi||'',
-        'Status': r.status||''
-      }));
-      const ws = XLSX.utils.json_to_sheet(rows);
-      ws['!cols']=[{wch:10},{wch:18},{wch:60},{wch:22},{wch:8}];
-      // Color header row
-      const range = XLSX.utils.decode_range(ws['!ref']);
-      for(let C=range.s.c; C<=range.e.c; C++){
-        const hdr = XLSX.utils.encode_cell({r:0,c:C});
-        if(!ws[hdr]) continue;
-        ws[hdr].s={fill:{fgColor:{rgb:'FF1E3A5F'}},font:{color:{rgb:'FFFFFFFF'},bold:true}};
-      }
-      const shName = (picData.pic.split(' ')[0]+'_'+bulan).substring(0,31);
-      XLSX.utils.book_append_sheet(wb, shName, ws);
+    if(json.status!=='ok' || !json.base64){
+      showToast((json.message)||'Tidak ada data absensi','info'); return;
     }
 
-    const fname = 'Absensi_'+bulan+'_'+tahun+(pic?'_'+pic.split(' ')[0]:'')+'.xlsx';
-    hideOverlay();
-    // Blob download — reliable di semua browser & GitHub Pages
-    const _wbOut = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-    const _blob  = new Blob([_wbOut], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const _url   = URL.createObjectURL(_blob);
-    const _a     = document.createElement('a');
-    _a.href = _url; _a.download = fname;
-    document.body.appendChild(_a); _a.click();
-    setTimeout(function(){ document.body.removeChild(_a); URL.revokeObjectURL(_url); }, 1000);
-    showToast('File '+fname+' diunduh ke komputer!','ok');
+    // Decode base64 → Blob → download lokal
+    const byteChars = atob(json.base64);
+    const byteArr   = new Uint8Array(byteChars.length);
+    for(let i=0;i<byteChars.length;i++) byteArr[i]=byteChars.charCodeAt(i);
+    const blob = new Blob([byteArr],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download=json.filename||('Absensi_'+bulan+'_'+tahun+'.xlsx');
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },1000);
+    showToast('File '+a.download+' diunduh!','ok');
   } catch(e){
     hideOverlay();
     showToast('Gagal: '+e.message,'err');
