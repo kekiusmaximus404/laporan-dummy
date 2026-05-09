@@ -2403,7 +2403,14 @@ async function exportAbsensiServer(){
 
     const fname = 'Absensi_'+bulan+'_'+tahun+(pic?'_'+pic.split(' ')[0]:'')+'.xlsx';
     hideOverlay();
-    XLSX.writeFile(wb, fname);
+    // Blob download — reliable di semua browser & GitHub Pages
+    const _wbOut = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const _blob  = new Blob([_wbOut], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const _url   = URL.createObjectURL(_blob);
+    const _a     = document.createElement('a');
+    _a.href = _url; _a.download = fname;
+    document.body.appendChild(_a); _a.click();
+    setTimeout(function(){ document.body.removeChild(_a); URL.revokeObjectURL(_url); }, 1000);
     showToast('File '+fname+' diunduh ke komputer!','ok');
   } catch(e){
     hideOverlay();
@@ -6101,100 +6108,52 @@ function _applyMenuConfig(cfg){
 //  (Point 1: already works via XLSX.writeFile, just ensure it triggers)
 // ════════════════════════════════════════════════════════════
 
-// ── Berkas PDF: buka tab baru dengan kop surat CU Keling Kumang + cetak ──────
-function _generateBerkasPDF(berkas) {
-  var now = new Date();
-  var tglCetak = now.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  var uid = 'ITD-' + Date.now().toString(36).toUpperCase();
-  var namaFile = berkas.namaFile || '-';
-  var judulKat = berkas.title || '-';
-  var tipeFile = (berkas.tipe || '-').toUpperCase();
-  var ukuran   = (berkas.sizeKB||0) + ' KB';
-  var folder   = berkas.folder || judulKat;
-  var uploader = berkas.uploader || '-';
-  var waktu    = berkas.waktu || '-';
-  var fileUrl  = berkas.fileUrl || '#';
+// ── Berkas PDF: convert file asli → PDF via GAS Drive, download lokal ─────────
+async function _generateBerkasPDF(berkas) {
+  // Extract fileId dari Google Drive URL
+  var fileUrl = berkas.fileUrl || '';
+  var match   = fileUrl.match(/\/d\/([a-zA-Z0-9_-]+)\//);
+  if (!match) {
+    // Try alternate format
+    match = fileUrl.match(/id=([a-zA-Z0-9_-]+)/);
+  }
+  if (!match) {
+    showToast('Tidak bisa mengambil ID file dari URL Drive.','err');
+    return;
+  }
+  var fileId = match[1];
 
-  // Ikon file
-  var ext = (namaFile.split('.').pop()||'').toLowerCase();
-  var iconMap = {pdf:'📕',docx:'📘',doc:'📘',xlsx:'📗',xls:'📗',pptx:'📙',ppt:'📙',txt:'📄',csv:'📊'};
-  var fileIcon = iconMap[ext] || '📄';
+  showOverlay('Mengonversi ' + berkas.namaFile + ' ke PDF...');
+  try {
+    var json = await fetchGAS({
+      action:  'convertBerkasToPdf',
+      pin:     currentPin,
+      fileId:  fileId
+    });
 
-  var html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8">'
-    + '<title>Dokumen Arsip — '+judulKat+'</title>'
-    + '<style>'
-    + '*{box-sizing:border-box;margin:0;padding:0;}'
-    + 'body{font-family:Arial,sans-serif;font-size:12px;color:#222;background:#fff;padding:20px 30px;}'
-    + '.kop{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1e3a5f;padding-bottom:10px;margin-bottom:6px;}'
-    + '.kop-center{text-align:center;flex:1;}'
-    + '.kop-center h1{font-size:16px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;}'
-    + '.kop-center p{font-size:10px;color:#444;line-height:1.5;margin-top:2px;}'
-    + '.kop-logo{width:60px;height:60px;object-fit:contain;}'
-    + '.divider{border:none;border-top:1.5px solid #1e3a5f;margin:4px 0 14px;}'
-    + '.judul{text-align:center;font-size:14px;font-weight:bold;text-decoration:underline;margin-bottom:16px;letter-spacing:0.5px;}'
-    + 'table{width:100%;border-collapse:collapse;margin-bottom:14px;}'
-    + 'td{border:1px solid #aaa;padding:7px 10px;vertical-align:top;}'
-    + 'td:first-child{font-weight:bold;width:140px;background:#f5f7fa;}'
-    + '.file-link-box{background:#f0f7ff;border:1px solid #b3d4f7;border-radius:6px;padding:10px 14px;margin-top:12px;}'
-    + '.file-link-box a{color:#1e3a5f;word-break:break-all;font-size:11px;}'
-    + '.wm{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;overflow:hidden;}'
-    + '.wm-text{font-size:38px;font-weight:bold;color:rgba(30,58,95,0.055);transform:rotate(-40deg);white-space:nowrap;letter-spacing:2px;text-align:center;line-height:2.2;}'
-    + '.content{position:relative;z-index:1;}'
-    + '.footer{margin-top:20px;text-align:center;font-size:9px;color:#999;border-top:1px solid #ddd;padding-top:6px;}'
-    + '@media print{.no-print{display:none}body{padding:10px 20px;}}'
-    + '</style></head><body>'
-    // Watermark diagonal repeated
-    + '<div class="wm"><div class="wm-text">'
-    + 'IT Departemen CU Keling Kumang&nbsp;&nbsp;&nbsp;IT Departemen CU Keling Kumang<br>'
-    + 'Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi<br>'
-    + 'IT Departemen CU Keling Kumang&nbsp;&nbsp;&nbsp;IT Departemen CU Keling Kumang<br>'
-    + 'Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi<br>'
-    + 'IT Departemen CU Keling Kumang&nbsp;&nbsp;&nbsp;IT Departemen CU Keling Kumang<br>'
-    + 'Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi<br>'
-    + '</div></div>'
-    + '<div class="content">'
-    // KOP SURAT
-    + '<div class="kop">'
-    + '<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/240px-PNG_transparency_demonstration_1.png" class="kop-logo" onerror="this.style.display=\'none\'">'
-    + '<div class="kop-center">'
-    + '<h1>CU KELING KUMANG</h1>'
-    + '<p>Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau<br>'
-    + 'Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513, Kabupaten Sekadau, Kalimantan Barat<br>'
-    + 'E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</p>'
-    + '</div>'
-    + '<div style="text-align:right;font-size:11px;font-weight:bold;color:#e63312;font-style:italic;line-height:1.3;">'
-    + '<span style="font-size:18px;font-weight:900;color:#e63312;">Keling</span><span style="font-size:18px;font-weight:900;color:#1e3a5f;">Kumang</span><br>'
-    + '<span style="font-size:9px;color:#555;font-style:normal;letter-spacing:1px;">Member-TBL-Entrepreneur</span>'
-    + '</div></div>'
-    + '<hr class="divider">'
-    + '<div class="judul">Dokumen Arsip Digital &mdash; IT Departemen</div>'
-    // INFO TABLE
-    + '<table>'
-    + '<tr><td>Judul / Kategori</td><td>'+judulKat+'</td></tr>'
-    + '<tr><td>Nama File</td><td>'+fileIcon+' '+namaFile+'</td></tr>'
-    + '<tr><td>Tipe File</td><td>'+tipeFile+'</td></tr>'
-    + '<tr><td>Ukuran File</td><td>'+ukuran+'</td></tr>'
-    + '<tr><td>Folder</td><td>'+folder+'</td></tr>'
-    + '<tr><td>Diupload Oleh</td><td>'+uploader+'</td></tr>'
-    + '<tr><td>Waktu Upload</td><td>'+waktu+'</td></tr>'
-    + '<tr><td>Dicetak</td><td>'+tglCetak+'</td></tr>'
-    + '</table>'
-    // Link file
-    + '<div class="file-link-box">'
-    + '<div style="font-size:11px;font-weight:bold;color:#1e3a5f;margin-bottom:4px;">🔗 Akses File</div>'
-    + '<a href="'+fileUrl+'" target="_blank">'+fileUrl+'</a>'
-    + '</div>'
-    // Footer
-    + '<div class="footer">ID Dokumen: '+uid+' &nbsp;|&nbsp; Diterbitkan oleh IT Departemen CU Keling Kumang &nbsp;|&nbsp; Dokumen ini diterbitkan secara resmi</div>'
-    + '</div>'
-    + '<div class="no-print" style="text-align:center;margin-top:20px;">'
-    + '<button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;">🖨️ Cetak / Simpan PDF</button>'
-    + '</div>'
-    + '</body></html>';
+    hideOverlay();
 
-  var w = window.open('', '_blank');
-  if(w){ w.document.write(html); w.document.close(); }
-  else showToast('Popup diblokir browser. Izinkan popup untuk fitur ini.','info');
+    if (json.status !== 'ok' || !json.base64) {
+      showToast('Gagal konversi: ' + (json.message||'error'), 'err');
+      return;
+    }
+
+    // Decode base64 → Blob → download
+    var byteChars = atob(json.base64);
+    var byteArr   = new Uint8Array(byteChars.length);
+    for (var i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+    var blob = new Blob([byteArr], {type: 'application/pdf'});
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = json.filename || berkas.namaFile.replace(/\.[^.]+$/, '') + '.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    showToast('PDF "' + a.download + '" berhasil diunduh!', 'ok');
+
+  } catch(e) {
+    hideOverlay();
+    showToast('Gagal: ' + e.message, 'err');
+  }
 }
 
 // ── Nota edit helpers ────────────────────────────────────────────────────────
