@@ -880,50 +880,43 @@
   </div>
 </div>
 
-<div class="overlay" id="overlay">
-  <div class="overlay-box">
-    <div class="spinner"></div>
-    <p id="overlay-msg">Memproses...</p>
-  </div>
-</div>
+
 
 <div id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
+
+
 
 <!-- ════════════════════════════════════════════════════════
      MODULES — Load order: foundation → features → exports
      Semua file ada di folder js/
 ════════════════════════════════════════════════════════ -->
 
-<!-- 1. Foundation -->
-<script src="js/config.js"></script>    <!-- Konstanta & URL -->
-<script src="js/api.js"></script>       <!-- fetchGAS wrapper -->
-<script src="js/utils.js"></script>     <!-- Helper: format, toast, compress -->
-<script src="js/auth.js"></script>      <!-- Login, logout, session -->
-<script src="js/ui.js"></script>        <!-- Navigasi, sidebar, init app -->
 
-<!-- 2. Forms & Input -->
-<script src="js/form-maintenance.js"></script>  <!-- Form aktivitas harian -->
-<script src="js/ots.js"></script>               <!-- Form & modul OTS -->
-<script src="js/pengajuan.js"></script>         <!-- Pengajuan barang -->
 
-<!-- 3. Log & View -->
-<script src="js/log.js"></script>       <!-- Log harian view -->
 
-<!-- 4. Reports & Rekap -->
-<script src="js/rekap.js"></script>     <!-- Rekap maintenance & OTS -->
-<script src="js/barang.js"></script>    <!-- Report barang & sparepart -->
-<script src="js/absensi.js"></script>   <!-- Rekap absensi PIC -->
 
-<!-- 5. Features -->
-<script src="js/upload-berkas.js"></script>  <!-- ITD Upload -->
-<script src="js/dashboard.js"></script>      <!-- Dashboard PIC personal -->
-<script src="js/admin.js"></script>          <!-- Manajemen user & menu -->
 
-<!-- 6. Export -->
-<script src="js/export-pdf.js"></script>  <!-- Generate PDF semua modul -->
 
+
+<!-- ═══════════════════════════════════════════════
+     JS Modules — load order penting
+═══════════════════════════════════════════════ -->
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/form-maintenance.js"></script>
+<script src="js/ots.js"></script>
+<script src="js/pengajuan.js"></script>
+<script src="js/log.js"></script>
+<script src="js/rekap.js"></script>
+<script src="js/barang.js"></script>
+<script src="js/absensi.js"></script>
+<script src="js/upload-berkas.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/export-pdf.js"></script>
 </html>
