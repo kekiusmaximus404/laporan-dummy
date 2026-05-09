@@ -574,7 +574,7 @@ body{margin:0;overflow-x:hidden;}
       </button>
       <button id="sb-btn-ots" class="sb-item" onclick="currentMenu='input';switchSub('ots','input');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        <span class="sb-label">Form OTS</span>
+        <span class="sb-label">OTS</span>
       </button>
       <button id="sb-btn-pengajuan" class="sb-item" onclick="currentMenu='input';switchSub('pengajuan','input');setSbActive(this)">
         <svg class="sb-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.6)" stroke-width="2" style="flex-shrink:0;"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -1847,15 +1847,23 @@ function showApp(){
   var isManager = currentRole === 'manager';
   // Manager: semua tampil. PIC: sembunyikan semua kecuali dasar, lalu _applyMenuConfig kontrol
   // managerOnly: sembunyikan untuk PIC, tampilkan untuk manager
+  // PIC sees: Maintenance, OTS, Log Harian, Rekap Absensi
+  // Manager sees everything
   var managerOnly = ['sb-btn-pengajuan','sb-btn-rep-barang','sb-btn-rep-pengajuan',
-    'sb-btn-rep-maintenance','sb-btn-rep-ots','sb-btn-rep-absensi',
-    'mbtn-setting','sb-sec-laporan','sb-sec-sistem',
-    'sb-btn-upload','sb-sec-upload-label',
-    'sb-btn-maintenance','sb-btn-ots','mbtn-log'];
+    'sb-btn-rep-maintenance','sb-btn-rep-ots',
+    'mbtn-setting','sb-sec-sistem',
+    'sb-btn-upload','sb-sec-upload-label'];
   managerOnly.forEach(function(id){
     var el=document.getElementById(id);
     if(el) el.style.display=isManager?'':'none';
   });
+  // PIC: show Log & Laporan section, Log Harian, Rekap Absensi
+  if(!isManager){
+    ['sb-sec-laporan','mbtn-log','sb-btn-rep-absensi'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.style.display='';
+    });
+  }
   // Untuk PIC: _applyMenuConfig akan override berdasarkan config manager
   // Dipanggil setelah showApp selesai (lihat doLogin dan window.onload)
   // Lock PIC selects untuk non-manager
@@ -2394,8 +2402,9 @@ async function exportAbsensiServer(){
     }
 
     const fname = 'Absensi_'+bulan+'_'+tahun+(pic?'_'+pic.split(' ')[0]:'')+'.xlsx';
+    hideOverlay();
     XLSX.writeFile(wb, fname);
-    showToast('File '+fname+' diunduh!','ok');
+    showToast('File '+fname+' diunduh ke komputer!','ok');
   } catch(e){
     hideOverlay();
     showToast('Gagal: '+e.message,'err');
@@ -2403,62 +2412,6 @@ async function exportAbsensiServer(){
 }
 
 // ── Export Absensi ────────────────────────────────────────────────────────────
-async function exportAbsensi(){
-  const bulan = document.getElementById('absen-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
-  const tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
-  showOverlay('Menyusun data absensi dari Sheet...');
-  try {
-    const json = await fetchGAS({action:'generateAbsensi', bulan, tahun, pin: currentPin});
-    hideOverlay();
-    if(json.status !== 'ok' || !json.data?.length){
-      showToast('Tidak ada data absensi untuk periode ini', 'info');
-      return;
-    }
-    // Untuk setiap PIC, buat file Excel via Apps Script
-    const data = json.data;
-    if(data.length === 1){
-      await _downloadAbsensiExcel(data[0], bulan, tahun);
-    } else {
-      // Multi-PIC: tanya pilihan
-      const names = data.map(d=>d.pic).join(', ');
-      showToast(`Ditemukan ${data.length} PIC: ${names}. Mengunduh semua...`, 'info');
-      for(const picData of data){
-        await _downloadAbsensiExcel(picData, bulan, tahun);
-      }
-    }
-  } catch(e){
-    hideOverlay();
-    showToast('Gagal: ' + e.message, 'err');
-  }
-}
-
-async function _downloadAbsensiExcel(picData, bulan, tahun){
-  // Kirim data ke Apps Script untuk generate Excel via Sheets→Drive
-  showOverlay(`Membuat absensi ${picData.pic}...`);
-  try {
-    const fd = new FormData();
-    fd.append('data', JSON.stringify({
-      action: 'saveAbsensiExcel',
-      pic: picData.pic,
-      bulan, tahun,
-      rows: picData.rows,
-      tlCount: picData.tlCount,
-      pin: currentPin
-    }));
-    const res = await fetch(getUrl(), {method:'POST', body:fd});
-    const json = await res.json();
-    hideOverlay();
-    if(json.status === 'ok' && json.url){
-      showToast(`Absensi ${picData.pic} siap!`, 'ok');
-      window.open(json.url, '_blank');
-    } else {
-      showToast('Gagal buat Excel: ' + (json.message||''), 'err');
-    }
-  } catch(e){
-    hideOverlay();
-    showToast('Gagal: ' + e.message, 'err');
-  }
-}
 
 
 
@@ -5247,6 +5200,26 @@ function editPengajuanReport(id){
   bodyHtml += '<thead><tr style="background:var(--surface3);"><th style="padding:7px 8px;text-align:left;">Nama</th><th style="padding:7px 8px;text-align:left;">Type</th><th style="padding:7px 8px;text-align:left;">Brand</th><th style="padding:7px 8px;text-align:left;">Jumlah</th><th></th></tr></thead>';
   bodyHtml += '<tbody id="pjn-edit-tbody">'+itemRows+'</tbody></table></div>';
   bodyHtml += '<button onclick="addPjnEditRow()" class="btn-outline" style="margin-top:8px;width:100%;">+ Tambah Baris</button>';
+
+  // ── Nota Pembelian ───────────────────────────────────────
+  var existNotas = r.notas||[];
+  window._editNotaBase = existNotas.slice(); // existing nota refs
+  window._editNotaNew  = [];                 // new images as base64
+  bodyHtml += '<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">';
+  bodyHtml += '<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:8px;">📎 Nota Pembelian</div>';
+  bodyHtml += '<div id="nota-edit-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;">';
+  existNotas.forEach(function(src,i){
+    bodyHtml += '<div id="nota-edit-img-'+i+'" style="position:relative;">';
+    bodyHtml += '<img src="'+src+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:1px solid var(--border);">';
+    bodyHtml += '<button onclick="_removeNotaEdit('+i+')" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.65);color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px;line-height:1;">×</button>';
+    bodyHtml += '</div>';
+  });
+  bodyHtml += '</div>';
+  bodyHtml += '<input type="file" id="nota-edit-file" accept="image/*" multiple style="display:none;" onchange="_onNotaEditFile(this)">';
+  bodyHtml += '<button class="btn-outline" onclick="document.getElementById(\'nota-edit-file\').click()" style="width:100%;font-size:12px;margin-bottom:0;">📷 Tambah Foto Nota</button>';
+  bodyHtml += '<div id="nota-edit-status" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>';
+  bodyHtml += '</div>';
+
   bodyHtml += '<div style="display:flex;gap:10px;margin-top:16px;">';
   bodyHtml += '<button onclick="savePengajuanEdit(\''+id+'\')" class="btn-primary" style="flex:1;margin-top:0;padding:10px;">💾 Simpan</button>';
   bodyHtml += '<button onclick="closeOTSModal()" style="padding:10px 20px;background:var(--surface3);color:var(--text2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">✕ Batal</button>';
@@ -5295,9 +5268,11 @@ async function savePengajuanEdit(id){
   });
 
   var r = (_pengajuanRecords||[]).find(function(x){return x.id===id;})||{};
+  // Gabungkan nota existing (sudah dikurangi yg dihapus) + nota baru
+  var finalNotas = (window._editNotaBase||r.notas||[]).concat(window._editNotaNew||[]);
   showOverlay('Menyimpan perubahan...');
   try {
-    var payload = {action:'updatePengajuanFull', pin:currentPin, id, tempat, tgl, ket, items, notas:r.notas||[]};
+    var payload = {action:'updatePengajuanFull', pin:currentPin, id, tempat, tgl, ket, items, notas:finalNotas};
     var fd = new FormData();
     fd.append('data', JSON.stringify(payload));
     var res  = await fetch(getUrl(), {method:'POST', body:fd});
@@ -5305,7 +5280,8 @@ async function savePengajuanEdit(id){
     hideOverlay();
     if(json.status === 'ok'){
       var ci = (_pengajuanRecords||[]).findIndex(function(x){return x.id===id;});
-      if(ci>=0) _pengajuanRecords[ci] = Object.assign({}, _pengajuanRecords[ci], {tempat, tgl, ket, items});
+      if(ci>=0) _pengajuanRecords[ci] = Object.assign({}, _pengajuanRecords[ci], {tempat, tgl, ket, items, notas:finalNotas});
+      window._editNotaBase=[]; window._editNotaNew=[];
       showToast('Pengajuan berhasil diupdate!','ok');
       closeOTSModal();
       renderReportPengajuan(_pengajuanRecords,'');
@@ -5834,16 +5810,10 @@ var _menuConfigTarget = null;
 
 // All PIC-visible menu items
 var PIC_MENU_ITEMS = [
-  {id:'sb-btn-maintenance',    label:'🔧 Maintenance (Perbaikan HW/Jaringan)', section:'Input'},
-  {id:'sb-btn-ots',            label:'📋 Form OTS',                            section:'Input'},
-  {id:'sb-btn-pengajuan',      label:'🛒 Pengajuan Barang',                    section:'Input'},
-  {id:'mbtn-log',              label:'📂 Log Harian',                          section:'Log & Laporan'},
-  {id:'sb-btn-rep-maintenance',label:'📊 Report Maintenance',                  section:'Log & Laporan'},
-  {id:'sb-btn-rep-ots',        label:'📊 Report OTS',                          section:'Log & Laporan'},
-  {id:'sb-btn-rep-barang',     label:'📦 Penggunaan Barang',                   section:'Log & Laporan'},
-  {id:'sb-btn-rep-pengajuan',  label:'🛒 Pengajuan Barang (Laporan)',           section:'Log & Laporan'},
-  {id:'sb-btn-rep-absensi',    label:'📅 Rekap Absensi',                       section:'Log & Laporan'},
-  {id:'sb-btn-upload',         label:'📁 ITD Upload',                          section:'Berkas & Upload'},
+  {id:'sb-btn-maintenance',    label:'🔧 Maintenance',   section:'Input'},
+  {id:'sb-btn-ots',            label:'📋 OTS',            section:'Input'},
+  {id:'mbtn-log',              label:'📂 Log Harian',     section:'Log & Laporan'},
+  {id:'sb-btn-rep-absensi',    label:'📅 Rekap Absensi',  section:'Log & Laporan'},
 ];
 
 async function loadAdminUsers(){
@@ -6131,119 +6101,139 @@ function _applyMenuConfig(cfg){
 //  (Point 1: already works via XLSX.writeFile, just ensure it triggers)
 // ════════════════════════════════════════════════════════════
 
-// ── Berkas PDF Generator dengan Watermark ────────────────────────────────────
-async function _generateBerkasPDF(berkas) {
-  showOverlay('Membuat PDF dengan watermark...');
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
+// ── Berkas PDF: buka tab baru dengan kop surat CU Keling Kumang + cetak ──────
+function _generateBerkasPDF(berkas) {
+  var now = new Date();
+  var tglCetak = now.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var uid = 'ITD-' + Date.now().toString(36).toUpperCase();
+  var namaFile = berkas.namaFile || '-';
+  var judulKat = berkas.title || '-';
+  var tipeFile = (berkas.tipe || '-').toUpperCase();
+  var ukuran   = (berkas.sizeKB||0) + ' KB';
+  var folder   = berkas.folder || judulKat;
+  var uploader = berkas.uploader || '-';
+  var waktu    = berkas.waktu || '-';
+  var fileUrl  = berkas.fileUrl || '#';
 
-    // ── Header kop surat ──────────────────────────────────────
-    doc.setFillColor(30, 58, 95);
-    doc.rect(0, 0, pageW, 28, 'F');
-    doc.setTextColor(255,255,255);
-    doc.setFontSize(14); doc.setFont('helvetica','bold');
-    doc.text('CU KELING KUMANG', 14, 10);
-    doc.setFontSize(9); doc.setFont('helvetica','normal');
-    doc.text('IT Departemen — Dokumen Resmi', 14, 17);
-    doc.setFontSize(8);
-    doc.text('Diterbitkan: '+new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}), 14, 23);
+  // Ikon file
+  var ext = (namaFile.split('.').pop()||'').toLowerCase();
+  var iconMap = {pdf:'📕',docx:'📘',doc:'📘',xlsx:'📗',xls:'📗',pptx:'📙',ppt:'📙',txt:'📄',csv:'📊'};
+  var fileIcon = iconMap[ext] || '📄';
 
-    // QR-like identifier (unique pattern)
-    const uid = 'ITD-'+Date.now().toString(36).toUpperCase();
-    doc.setFontSize(7); doc.setTextColor(180,220,255);
-    doc.text('ID: '+uid, pageW-14, 23, {align:'right'});
+  var html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8">'
+    + '<title>Dokumen Arsip — '+judulKat+'</title>'
+    + '<style>'
+    + '*{box-sizing:border-box;margin:0;padding:0;}'
+    + 'body{font-family:Arial,sans-serif;font-size:12px;color:#222;background:#fff;padding:20px 30px;}'
+    + '.kop{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1e3a5f;padding-bottom:10px;margin-bottom:6px;}'
+    + '.kop-center{text-align:center;flex:1;}'
+    + '.kop-center h1{font-size:16px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;}'
+    + '.kop-center p{font-size:10px;color:#444;line-height:1.5;margin-top:2px;}'
+    + '.kop-logo{width:60px;height:60px;object-fit:contain;}'
+    + '.divider{border:none;border-top:1.5px solid #1e3a5f;margin:4px 0 14px;}'
+    + '.judul{text-align:center;font-size:14px;font-weight:bold;text-decoration:underline;margin-bottom:16px;letter-spacing:0.5px;}'
+    + 'table{width:100%;border-collapse:collapse;margin-bottom:14px;}'
+    + 'td{border:1px solid #aaa;padding:7px 10px;vertical-align:top;}'
+    + 'td:first-child{font-weight:bold;width:140px;background:#f5f7fa;}'
+    + '.file-link-box{background:#f0f7ff;border:1px solid #b3d4f7;border-radius:6px;padding:10px 14px;margin-top:12px;}'
+    + '.file-link-box a{color:#1e3a5f;word-break:break-all;font-size:11px;}'
+    + '.wm{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;overflow:hidden;}'
+    + '.wm-text{font-size:38px;font-weight:bold;color:rgba(30,58,95,0.055);transform:rotate(-40deg);white-space:nowrap;letter-spacing:2px;text-align:center;line-height:2.2;}'
+    + '.content{position:relative;z-index:1;}'
+    + '.footer{margin-top:20px;text-align:center;font-size:9px;color:#999;border-top:1px solid #ddd;padding-top:6px;}'
+    + '@media print{.no-print{display:none}body{padding:10px 20px;}}'
+    + '</style></head><body>'
+    // Watermark diagonal repeated
+    + '<div class="wm"><div class="wm-text">'
+    + 'IT Departemen CU Keling Kumang&nbsp;&nbsp;&nbsp;IT Departemen CU Keling Kumang<br>'
+    + 'Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi<br>'
+    + 'IT Departemen CU Keling Kumang&nbsp;&nbsp;&nbsp;IT Departemen CU Keling Kumang<br>'
+    + 'Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi<br>'
+    + 'IT Departemen CU Keling Kumang&nbsp;&nbsp;&nbsp;IT Departemen CU Keling Kumang<br>'
+    + 'Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi&nbsp;&nbsp;&nbsp;Diterbitkan Resmi<br>'
+    + '</div></div>'
+    + '<div class="content">'
+    // KOP SURAT
+    + '<div class="kop">'
+    + '<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/240px-PNG_transparency_demonstration_1.png" class="kop-logo" onerror="this.style.display=\'none\'">'
+    + '<div class="kop-center">'
+    + '<h1>CU KELING KUMANG</h1>'
+    + '<p>Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau<br>'
+    + 'Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513, Kabupaten Sekadau, Kalimantan Barat<br>'
+    + 'E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</p>'
+    + '</div>'
+    + '<div style="text-align:right;font-size:11px;font-weight:bold;color:#e63312;font-style:italic;line-height:1.3;">'
+    + '<span style="font-size:18px;font-weight:900;color:#e63312;">Keling</span><span style="font-size:18px;font-weight:900;color:#1e3a5f;">Kumang</span><br>'
+    + '<span style="font-size:9px;color:#555;font-style:normal;letter-spacing:1px;">Member-TBL-Entrepreneur</span>'
+    + '</div></div>'
+    + '<hr class="divider">'
+    + '<div class="judul">Dokumen Arsip Digital &mdash; IT Departemen</div>'
+    // INFO TABLE
+    + '<table>'
+    + '<tr><td>Judul / Kategori</td><td>'+judulKat+'</td></tr>'
+    + '<tr><td>Nama File</td><td>'+fileIcon+' '+namaFile+'</td></tr>'
+    + '<tr><td>Tipe File</td><td>'+tipeFile+'</td></tr>'
+    + '<tr><td>Ukuran File</td><td>'+ukuran+'</td></tr>'
+    + '<tr><td>Folder</td><td>'+folder+'</td></tr>'
+    + '<tr><td>Diupload Oleh</td><td>'+uploader+'</td></tr>'
+    + '<tr><td>Waktu Upload</td><td>'+waktu+'</td></tr>'
+    + '<tr><td>Dicetak</td><td>'+tglCetak+'</td></tr>'
+    + '</table>'
+    // Link file
+    + '<div class="file-link-box">'
+    + '<div style="font-size:11px;font-weight:bold;color:#1e3a5f;margin-bottom:4px;">🔗 Akses File</div>'
+    + '<a href="'+fileUrl+'" target="_blank">'+fileUrl+'</a>'
+    + '</div>'
+    // Footer
+    + '<div class="footer">ID Dokumen: '+uid+' &nbsp;|&nbsp; Diterbitkan oleh IT Departemen CU Keling Kumang &nbsp;|&nbsp; Dokumen ini diterbitkan secara resmi</div>'
+    + '</div>'
+    + '<div class="no-print" style="text-align:center;margin-top:20px;">'
+    + '<button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;">🖨️ Cetak / Simpan PDF</button>'
+    + '</div>'
+    + '</body></html>';
 
-    // ── Judul Dokumen ─────────────────────────────────────────
-    doc.setTextColor(30,58,95);
-    doc.setFontSize(13); doc.setFont('helvetica','bold');
-    doc.text(berkas.title||'Dokumen', pageW/2, 38, {align:'center'});
-    doc.setFontSize(10); doc.setFont('helvetica','normal');
-    doc.setTextColor(100,100,100);
-    doc.text('Nama File: '+berkas.namaFile, pageW/2, 45, {align:'center'});
-
-    // ── Tabel Info Dokumen ────────────────────────────────────
-    doc.autoTable({
-      startY: 52,
-      head: [['Informasi','Keterangan']],
-      body: [
-        ['Judul/Kategori', berkas.title||'-'],
-        ['Nama File', berkas.namaFile||'-'],
-        ['Tipe File', (berkas.tipe||'-').toUpperCase()],
-        ['Ukuran', (berkas.sizeKB||0)+' KB'],
-        ['Diupload Oleh', berkas.uploader||'-'],
-        ['Waktu Upload', berkas.waktu||'-'],
-        ['ID Dokumen', uid],
-      ],
-      styles: { fontSize:9, cellPadding:3 },
-      headStyles: { fillColor:[30,58,95], textColor:255, fontStyle:'bold' },
-      alternateRowStyles: { fillColor:[245,248,255] },
-      columnStyles: { 0:{fontStyle:'bold', cellWidth:55}, 1:{cellWidth:'auto'} },
-      margin: { left:14, right:14 }
-    });
-
-    // ── Teks info akses file ──────────────────────────────────
-    const afterY = doc.lastAutoTable.finalY + 10;
-    if(berkas.fileUrl && berkas.fileUrl.length > 5){
-      doc.setFontSize(8); doc.setTextColor(80,80,80);
-      doc.text('File asli tersedia di Google Drive:', 14, afterY);
-      doc.setTextColor(30,58,95);
-      doc.textWithLink(berkas.fileUrl.substring(0,80), 14, afterY+5, {url: berkas.fileUrl});
-    }
-
-    // ── WATERMARK diagonal (semua halaman) ───────────────────
-    function addWatermark(pageNum) {
-      doc.setPage(pageNum);
-      doc.saveGraphicsState();
-      doc.setGState(new doc.GState({opacity:0.07}));
-      doc.setTextColor(30,58,95);
-      doc.setFontSize(19);
-      doc.setFont('helvetica','bold');
-
-      // Diagonal text repeated
-      const wm = 'Diterbitkan oleh IT Departemen CU Keling Kumang';
-      const angle = 40;
-      for(let y=-20; y<pageH+60; y+=38){
-        doc.text(wm, pageW/2, y, {align:'center', angle});
-      }
-      doc.restoreGraphicsState();
-
-      // Border frame
-      doc.setDrawColor(30,58,95);
-      doc.setLineWidth(0.8);
-      doc.rect(8, 8, pageW-16, pageH-16);
-      doc.setLineWidth(0.3);
-      doc.rect(10, 10, pageW-20, pageH-20);
-    }
-
-    // ── Footer ────────────────────────────────────────────────
-    const totalPages = doc.internal.getNumberOfPages();
-    for(let i=1; i<=totalPages; i++){
-      addWatermark(i);
-      doc.setPage(i);
-      doc.setFontSize(7); doc.setTextColor(150,150,150);
-      doc.setFont('helvetica','normal');
-      doc.text('IT Departemen CU Keling Kumang  ·  Dokumen ini diterbitkan secara resmi  ·  '+uid, pageW/2, pageH-5, {align:'center'});
-      doc.text('Halaman '+i+'/'+totalPages, pageW-14, pageH-5, {align:'right'});
-    }
-
-    // ── Download ──────────────────────────────────────────────
-    const fname = (berkas.title||'Dokumen').replace(/[^a-zA-Z0-9 _\-]/g,'')+'_'+uid+'.pdf';
-    doc.save(fname);
-    hideOverlay();
-    showToast('PDF "'+fname+'" berhasil diunduh!','ok');
-  } catch(e) {
-    hideOverlay();
-    showToast('Gagal generate PDF: '+e.message,'err');
-    console.error(e);
-  }
+  var w = window.open('', '_blank');
+  if(w){ w.document.write(html); w.document.close(); }
+  else showToast('Popup diblokir browser. Izinkan popup untuk fitur ini.','info');
 }
 
-function _onToggleUser(el){ toggleUserEnabled(el.dataset.uname, el.checked); }
-function _onEditUser(el){ openEditUser(el.dataset.uname, parseInt(el.dataset.uidx)); }
-function _onDelUser(el){ deleteAdminUser(el.dataset.uname); }
+// ── Nota edit helpers ────────────────────────────────────────────────────────
+function _removeNotaEdit(idx){
+  if(window._editNotaBase && idx < window._editNotaBase.length){
+    window._editNotaBase.splice(idx,1);
+  }
+  var el=document.getElementById('nota-edit-img-'+idx);
+  if(el) el.remove();
+  var st=document.getElementById('nota-edit-status');
+  if(st) st.textContent='Foto '+idx+' dihapus.';
+}
+
+function _onNotaEditFile(input){
+  var files=Array.from(input.files||[]);
+  if(!files.length) return;
+  var st=document.getElementById('nota-edit-status');
+  if(st) st.textContent='Membaca '+files.length+' foto...';
+  Promise.all(files.map(function(f){
+    return new Promise(function(res){
+      var r=new FileReader();
+      r.onload=function(e){res(e.target.result);};
+      r.readAsDataURL(f);
+    });
+  })).then(function(results){
+    if(!window._editNotaNew) window._editNotaNew=[];
+    window._editNotaNew=window._editNotaNew.concat(results);
+    var grid=document.getElementById('nota-edit-grid');
+    if(grid){
+      results.forEach(function(src,i){
+        var div=document.createElement('div');
+        div.style.cssText='position:relative;';
+        div.innerHTML='<img src="'+src+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:1px solid var(--border);">';
+        grid.appendChild(div);
+      });
+    }
+    if(st) st.textContent=results.length+' foto baru ditambahkan. Klik Simpan untuk menyimpan.';
+  });
+}
 
 </script>
 </body>
