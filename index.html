@@ -1785,6 +1785,7 @@ function showApp(){
   // Manager: semua menu tampil. Non-manager: hanya Maintenance, Form OTS, Log Harian
   var isManager = currentRole === 'manager';
   // Manager: semua tampil. PIC: sembunyikan semua kecuali dasar, lalu _applyMenuConfig kontrol
+  // managerOnly: sembunyikan untuk PIC, tampilkan untuk manager
   var managerOnly = ['sb-btn-pengajuan','sb-btn-rep-barang','sb-btn-rep-pengajuan',
     'sb-btn-rep-maintenance','sb-btn-rep-ots','sb-btn-rep-absensi',
     'mbtn-setting','sb-sec-laporan','sb-sec-sistem',
@@ -1794,6 +1795,8 @@ function showApp(){
     var el=document.getElementById(id);
     if(el) el.style.display=isManager?'':'none';
   });
+  // Untuk PIC: _applyMenuConfig akan override berdasarkan config manager
+  // Dipanggil setelah showApp selesai (lihat doLogin dan window.onload)
   // Lock PIC selects untuk non-manager
   _applyPicLock();
 
@@ -1887,7 +1890,7 @@ function switchMenu(menu){
   var titles={home:'Beranda',input:'Input Data',log:'Log Harian',report:'Report',setting:'Pengaturan',upload:'ITD Upload'};
   var el=document.getElementById('top-bar-title');if(el&&titles[menu])el.textContent=titles[menu];
   document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('active');});
-  if(menu==='home'){var p=document.getElementById('pane-home');if(p)p.classList.add('active');if(currentRole==='manager'){if(typeof _initHomeMgr==='function')_initHomeMgr();}else{if(typeof _initHomePic==='function')_initHomePic();}}
+  if(menu==='home'){var p=document.getElementById('pane-home');if(p)p.classList.add('active');if(typeof _initHomePic==='function')_initHomePic();}
   else if(menu==='log'){var p=document.getElementById('pane-log');if(p)p.classList.add('active');if(typeof loadLogHarian==='function')loadLogHarian();}
   else if(menu==='setting'){var p=document.getElementById('pane-setting');if(p)p.classList.add('active');var ac=document.getElementById('admin-card');if(ac)ac.style.display=currentRole==='manager'?'block':'none';if(currentRole==='manager')loadAdminUsers();}
   else if(menu==='upload'){var p=document.getElementById('pane-upload');if(p)p.classList.add('active');loadBerkasList();}
@@ -5632,250 +5635,100 @@ function exportBerkasPDF(id) {
   var b = (_berkasAll||[]).find(function(x){ return x.id === id; });
   if (!b) { showToast('Data tidak ditemukan','info'); return; }
 
-  var tglFmt = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  // Jika sudah ada pdfUrl -> buka langsung
+  if(b.pdfUrl && b.pdfUrl.length > 5) {
+    window.open(b.pdfUrl, '_blank');
+    return;
+  }
+
+  // Fallback: generate halaman info berkas dengan KOP CUKK sama seperti OTS
+  var tglStr = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var icon   = typeof _getFileIcon === 'function' ? _getFileIcon(b.namaFile) : '\uD83D\uDCC4';
 
   function makeKOP(){
-    var logoL = typeof LOGO_KOP_B64 !== 'undefined' ? '<img src="'+LOGO_KOP_B64+'" style="height:68px;width:auto;display:block;">' : '<div style="width:68px;height:68px;background:#8B0000;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:9pt;">CUKK</div>';
-    var logoR = typeof LOGO_CUKK_B64 !== 'undefined' ? '<img src="'+LOGO_CUKK_B64+'" style="height:68px;width:auto;display:block;margin-left:auto;">' : '<div style="font-size:13pt;font-weight:900;text-align:right;"><span style="color:#1e3a5f;">Keling</span><br><span style="color:#cc0000;">Kumang</span></div>';
     return '<table width="100%" style="border-collapse:collapse;margin-bottom:0;"><tr>'
-      +'<td width="85" style="border:none;padding:0;vertical-align:middle;">'+logoL+'</td>'
+      +'<td width="85" style="border:none;padding:0;vertical-align:middle;">'
+      +'<img src="'+LOGO_KOP_B64+'" style="height:68px;width:auto;display:block;"></td>'
       +'<td style="border:none;padding:0 8px;vertical-align:middle;text-align:center;">'
       +'<div style="font-weight:700;font-size:12.5pt;font-family:Arial;">CU KELING KUMANG</div>'
       +'<div style="font-size:7.5pt;font-family:Arial;margin-top:2px;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau</div>'
       +'<div style="font-size:7.5pt;font-family:Arial;">Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513, Kabupaten Sekadau, Kalimantan Barat</div>'
       +'<div style="font-size:7.5pt;font-family:Arial;">E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</div>'
       +'</td>'
-      +'<td width="85" style="border:none;padding:0;vertical-align:middle;text-align:right;">'+logoR+'</td>'
+      +'<td width="85" style="border:none;padding:0;vertical-align:middle;text-align:right;">'
+      +'<img src="'+LOGO_CUKK_B64+'" style="height:68px;width:auto;display:block;margin-left:auto;"></td>'
       +'</tr></table>'
       +'<div style="border-top:3px double #000;margin:6px 0 10px;"></div>';
   }
 
   var FOOTER = '<div style="border-top:1px solid #bbb;margin-top:auto;padding-top:5px;font-size:8pt;font-style:italic;color:#555;font-family:Arial;">'
     +'Shared Values: Integrity, Network, Value Creation, Innovation, Credibility, Togetherness, Unity, Speed &nbsp;|&nbsp;'
-    +'Visi: Menjadi Credit Union Pilihan Utama Masyarakat di Kalimantan'
-    +'</div>';
+    +'Visi: Menjadi Credit Union Pilihan Utama Masyarakat di Kalimantan</div>';
 
-  var WM = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(45deg);'
-    +'font-family:Arial;font-size:22pt;font-weight:900;color:rgba(30,58,95,0.07);'
-    +'white-space:nowrap;text-align:center;pointer-events:none;z-index:0;line-height:2;">'
-    +'Diterbitkan oleh:<br>Departemen Teknologi Informasi<br>CU Keling Kumang</div>';
-
-  function makePage(innerHtml, isLast){
+  function makePage(bodyContent, isLast){
     return '<div style="width:210mm;min-height:297mm;padding:13mm 14mm 10mm 14mm;box-sizing:border-box;display:flex;flex-direction:column;font-family:Arial;font-size:11pt;color:#000;'+(isLast?'':'page-break-after:always;')+'">'
       +makeKOP()
-      +'<div style="flex:1;">'+innerHtml+'</div>'
-      +FOOTER
-      +'</div>';
+      +'<div style="flex:1;">'+bodyContent+'</div>'
+      +FOOTER+'</div>';
   }
 
-  // ── HAL 1: INFO BERKAS ─────────────────────────────────────
-  var rows = [
-    ['ID Berkas',        _esc(b.id||'-')],
+  // Halaman 1 - Info Berkas
+  var body1 = '';
+  body1 += '<h2 style="text-align:center;font-size:13pt;font-weight:700;text-decoration:underline;margin-bottom:16px;">Dokumen Arsip Digital &mdash; IT Departemen</h2>';
+
+  // Info table
+  body1 += '<table width="100%" style="border-collapse:collapse;margin-bottom:16px;">';
+  var infoRows = [
     ['Judul / Kategori', _esc(b.title||'-')],
-    ['Nama File',        _esc(b.namaFile||'-')],
-    ['Tipe File',        _esc((b.tipe||'-').toUpperCase())],
-    ['Ukuran',           (b.sizeKB||0)+' KB'],
-    ['Folder',           _esc(b.folder||'-')],
-    ['Diupload Oleh',    _esc(b.uploader||'-')],
-    ['Waktu Upload',     _esc(b.waktu||'-')],
-    ['Dicetak',          tglFmt],
+    ['Nama File', icon+' '+_esc(b.namaFile||'-')],
+    ['Tipe File', _esc((b.tipe||'-').toUpperCase())],
+    ['Ukuran File', (b.sizeKB||0)+' KB'],
+    ['Folder', _esc(b.folder||'-')],
+    ['Diupload Oleh', _esc(b.uploader||'-')],
+    ['Waktu Upload', _esc(b.waktu||'-')],
+    ['Dicetak', tglStr],
   ];
-  var tblRows = rows.map(function(r){
-    return '<tr><td style="border:1px solid #999;padding:6px 8px;width:35%;background:#f9fafb;font-weight:700;">'+r[0]+'</td>'
-      +'<td style="border:1px solid #999;padding:6px 8px;">'+r[1]+'</td></tr>';
-  }).join('');
+  infoRows.forEach(function(r){
+    body1 += '<tr>';
+    body1 += '<td style="border:1px solid #999;padding:7px 10px;width:35%;font-weight:700;background:#f9fafb;font-size:10pt;">'+r[0]+'</td>';
+    body1 += '<td style="border:1px solid #999;padding:7px 10px;font-size:10pt;">'+r[1]+'</td>';
+    body1 += '</tr>';
+  });
+  body1 += '</table>';
 
-  var hal1 = '<div style="font-weight:700;font-size:14pt;text-align:center;margin-bottom:12px;border-bottom:1.5px solid #000;padding-bottom:5px;">ARSIP BERKAS DIGITAL — IT DEPARTEMEN</div>'
-    +'<table width="100%" style="border-collapse:collapse;margin-bottom:16px;">'+tblRows+'</table>';
-
+  // Akses file
   if(b.fileUrl && b.fileUrl.length > 5){
-    hal1 += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:10px 12px;margin-bottom:14px;">'
-      +'<div style="font-weight:700;font-size:10pt;color:#1e3a5f;margin-bottom:4px;">\uD83D\uDD17 Akses File:</div>'
-      +(b.fileUrl?'<div style="font-size:9pt;color:#1d4ed8;word-break:break-all;">\uD83D\uDCC4 File Asli: '+b.fileUrl+'</div>':'')
-      +(b.pdfUrl?'<div style="font-size:9pt;color:#1d4ed8;word-break:break-all;margin-top:4px;">\uD83D\uDCD5 Versi PDF: '+b.pdfUrl+'</div>':'')
-      +'</div>';
+    body1 += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:12px;margin-bottom:12px;">';
+    body1 += '<div style="font-weight:700;font-size:10pt;color:#1e3a5f;margin-bottom:6px;">\uD83D\uDD17 Akses File</div>';
+    body1 += '<div style="font-size:9pt;color:#1d4ed8;word-break:break-all;">'+_esc(b.fileUrl)+'</div>';
+    body1 += '</div>';
   }
 
-  hal1 += '<div style="text-align:right;font-weight:700;margin-bottom:10px;">'+tglFmt+'</div>'
-    +'<table width="100%" style="border-collapse:collapse;border:none;"><tr>'
-    +'<td width="48%" style="border:none;vertical-align:top;">'
-    +'<div>Divalidasi Oleh</div><div style="font-weight:700;">IT Departemen H&amp;N,</div>'
-    +'<div style="height:55px;"></div>'
-    +'<div style="border-top:1px solid #000;padding-top:3px;font-weight:700;">'+_esc(b.uploader||'')+'</div>'
-    +'<div style="font-size:9pt;">PIC IT Departemen</div>'
-    +'</td>'
-    +'<td width="4%" style="border:none;"></td>'
-    +'<td width="48%" style="border:none;vertical-align:top;text-align:center;">'
-    +'<div>Disetujui Oleh</div><div style="font-weight:700;">DEM Information Technology,</div>'
-    +'<div style="height:55px;"></div>'
-    +'<div style="border-top:1px solid #000;padding-top:3px;font-weight:700;">(Vinsensius Rekat)</div>'
-    +'<div style="font-size:9pt;">DEM Information Technology</div>'
-    +'</td></tr></table>';
+  // Watermark diagonal
+  var wm = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(45deg);font-size:24pt;font-weight:900;color:rgba(30,58,95,0.07);white-space:nowrap;text-align:center;pointer-events:none;z-index:0;line-height:2;">Diterbitkan oleh:<br>Departemen Teknologi Informasi<br>CU Keling Kumang</div>';
 
-  // ── HAL 2: VIEWER PDF / PRATINJAU ─────────────────────────
-  var hal2 = '<div style="font-weight:700;font-size:14pt;text-align:center;margin-bottom:16px;border-bottom:1.5px solid #000;padding-bottom:5px;">PRATINJAU DOKUMEN</div>';
-  if(b.pdfUrl && b.pdfUrl.length > 5){
-    hal2 += '<div style="text-align:center;margin-bottom:12px;font-size:10pt;color:#555;">Dokumen tersedia di Google Drive. Klik link di bawah untuk membuka.</div>'
-      +'<div style="background:#f9fafb;border:2px dashed #d1d5db;border-radius:8px;padding:30px;text-align:center;">'
-      +'<div style="font-size:40px;margin-bottom:12px;">\uD83D\uDCD5</div>'
-      +'<div style="font-size:12pt;font-weight:700;color:#1e3a5f;margin-bottom:8px;">'+_esc(b.namaFile)+'</div>'
-      +'<a href="'+b.pdfUrl+'" style="display:inline-block;margin-top:8px;background:#1e3a5f;color:#fff;padding:8px 20px;border-radius:6px;font-size:10pt;font-weight:700;text-decoration:none;">Buka PDF di Google Drive</a>'
-      +'</div>';
-  } else if(b.fileUrl && b.fileUrl.length > 5){
-    hal2 += '<div style="background:#f9fafb;border:2px dashed #d1d5db;border-radius:8px;padding:30px;text-align:center;">'
-      +'<div style="font-size:40px;margin-bottom:12px;">\uD83D\uDCC4</div>'
-      +'<div style="font-size:12pt;font-weight:700;color:#1e3a5f;margin-bottom:8px;">'+_esc(b.namaFile)+'</div>'
-      +'<a href="'+b.fileUrl+'" style="display:inline-block;margin-top:8px;background:#0891b2;color:#fff;padding:8px 20px;border-radius:6px;font-size:10pt;font-weight:700;text-decoration:none;">Buka File Asli</a>'
-      +'</div>';
-  } else {
-    hal2 += '<div style="text-align:center;padding:40px;color:#9ca3af;font-size:11pt;">Tidak ada file yang tersedia untuk ditampilkan.</div>';
-  }
-
-  var pages = [makePage(hal1, false), makePage(hal2, true)];
-
-  var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    +'<title>Arsip-'+_esc(b.namaFile)+'</title>'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0;}body{background:#fff;}'
-    +'@page{size:A4 portrait;margin:0;}'
-    +'@media print{body{margin:0;}button{display:none!important}}'
-    +'</style></head><body>'
-    +WM
-    +pages.join('\n')
-    +'<div style="margin:20px;text-align:center;" class="noprint">'
+  var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Arsip Berkas</title>'
+    +'<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#fff;}'
+    +'@media print{.noprint{display:none!important}}</style>'
+    +'</head><body>'
+    + wm
+    + makePage(body1, true)
+    +'<div class="noprint" style="text-align:center;padding:16px;">'
     +'<button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">\uD83D\uDDB8 Print / Simpan PDF</button>'
     +'</div>'
     +'</body></html>';
 
-  var w = window.open('','_blank','width=850,height=1100');
-  if(!w||w.closed||typeof w.closed==='undefined'){
-    var blob = new Blob([fullHtml],{type:'text/html'});
-    window.open(URL.createObjectURL(blob),'_blank');
-    return;
-  }
-  w.document.write(fullHtml);
-  w.document.close();
-  setTimeout(function(){ w.print(); }, 800);
+  var win = window.open('','_blank');
+  if(!win){ showToast('Popup diblokir browser. Izinkan popup.','info'); return; }
+  win.document.write(fullHtml);
+  win.document.close();
+  setTimeout(function(){ win.print(); }, 600);
 }
-async function _loadMgrDashboard(){
-  var body = document.getElementById('mgr-dash-body');
-  if(!body) return;
-  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">⏳ Memuat data tim PIC...</div>';
-  try {
-    // Load all users + all PIC dashboards in parallel
-    var usersJson = await fetchGAS({action:'getUsers', pin:currentPin});
-    if(usersJson.status !== 'ok'){ body.innerHTML='<div class="no-data">Gagal memuat data.</div>'; return; }
-    var users = (usersJson.data||[]).filter(function(u){ return u.role === 'pic'; });
-    _mgrDashLoaded = true;
-
-    // Summary
-    var total  = users.length;
-    var aktif  = users.filter(function(u){ return u.enabled; }).length;
-    var now    = new Date();
-    var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    var bulan  = months[now.getMonth()]+' '+now.getFullYear();
-
-    var html = '';
-
-    // Header summary strip
-    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">';
-    [{label:'Total PIC',val:total,icon:'👥',c:'#1e3a5f'},{label:'PIC Aktif',val:aktif,icon:'✅',c:'#059669'},{label:'Nonaktif',val:total-aktif,icon:'⛔',c:'#dc2626'}].forEach(function(s){
-      html += '<div style="background:#fff;border-radius:12px;padding:14px;border:1.5px solid var(--border);text-align:center;">';
-      html += '<div style="font-size:22px;">'+s.icon+'</div>';
-      html += '<div style="font-size:26px;font-weight:800;color:'+s.c+';line-height:1.1;margin-top:2px;">'+s.val+'</div>';
-      html += '<div style="font-size:10px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">'+s.label+'</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-
-    // Section label
-    html += '<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;">📊 Statistik Per PIC — '+bulan+'</div>';
-
-    // PIC placeholder cards while loading each dashboard
-    html += '<div id="mgr-pic-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;">';
-    users.forEach(function(u){
-      var initial = u.name.charAt(0).toUpperCase();
-      var enabled = u.enabled;
-      html += '<div id="mgr-pic-card-'+_slugName(u.name)+'" style="background:#fff;border-radius:14px;border:1.5px solid var(--border);overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.05);">';
-      html += '<div style="background:linear-gradient(135deg,#1e3a5f,#1d4ed8);padding:12px 16px;display:flex;align-items:center;gap:12px;">';
-      html += '<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0;">'+initial+'</div>';
-      html += '<div><div style="font-size:13px;font-weight:700;color:#fff;">'+_hesc(u.name)+'</div>';
-      html += '<div style="font-size:10px;color:rgba(255,255,255,0.7);">'+( enabled?'✅ Aktif':'⛔ Nonaktif')+'</div></div></div>';
-      html += '<div id="mgr-pic-stats-'+_slugName(u.name)+'" style="padding:12px 14px;min-height:100px;display:flex;align-items:center;justify-content:center;"><div style="font-size:11px;color:var(--text3);">⏳ Memuat...</div></div>';
-      html += '</div>';
-    });
-    html += '</div>';
-    html += '<div style="text-align:center;font-size:11px;color:var(--text3);margin-top:20px;border-top:1px solid var(--border);padding-top:10px;">Data diambil dari Google Sheets · <a href="#" onclick="_mgrDashLoaded=false;_loadMgrDashboard();return false;" style="color:var(--accent);">🔄 Refresh</a></div>';
-
-    body.innerHTML = html;
-
-    // Now load each PIC's dashboard data
-    users.forEach(function(u){
-      _loadPicCardData(u.name);
-    });
-
-  } catch(e) {
-    body.innerHTML = '<div class="no-data">Gagal koneksi server: '+e.message+'</div>';
-  }
-}
+async 
 
 function _slugName(name){ return name.replace(/[^a-zA-Z0-9]/g,'_'); }
 
-async function _loadPicCardData(picName){
-  var slug    = _slugName(picName);
-  var el      = document.getElementById('mgr-pic-stats-'+slug);
-  if(!el) return;
-  try {
-    var json = await fetchGAS({action:'getMyDashboard', pin:currentPin, picName:picName});
-    if(json.status!=='ok'||!json.data){ el.innerHTML='<div style="font-size:11px;color:var(--text3);text-align:center;">Belum ada data</div>'; return; }
-    var d = json.data;
-    var now = new Date();
-    var isWeekend = now.getDay()===0||now.getDay()===6;
-    var todayColor = d.todayLogged?'#059669':(isWeekend?'#64748b':'#dc2626');
-    var todayIcon  = d.todayLogged?'✅':(isWeekend?'😴':'⚠️');
-    var todayTxt   = d.todayLogged?'Laporan masuk':(isWeekend?'Hari libur':'Belum input');
-    var pct = d.stats.totalWorkdays>0 ? Math.round(d.stats.totalDaysLogged/d.stats.totalWorkdays*100) : 0;
-
-    var html = '';
-    // Today status bar
-    html += '<div style="background:'+todayColor+'18;border-left:3px solid '+todayColor+';padding:7px 10px;border-radius:0 6px 6px 0;margin-bottom:10px;display:flex;align-items:center;gap:8px;">';
-    html += '<span style="font-size:14px;">'+todayIcon+'</span>';
-    html += '<div><div style="font-size:11px;font-weight:700;color:'+todayColor+';">'+todayTxt+'</div>';
-    html += '<div style="font-size:10px;color:var(--text3);">'+d.bulan+'</div></div>';
-    if(d.streak>0) html += '<div style="margin-left:auto;font-size:10px;font-weight:700;color:#f59e0b;">🔥 '+d.streak+' hari</div>';
-    html += '</div>';
-
-    // Stats grid mini
-    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">';
-    var stats = [
-      {label:'Kehadiran',val:d.stats.totalDaysLogged+'/'+d.stats.totalWorkdays,icon:'📅'},
-      {label:'HW/Net',val:d.stats.hw+d.stats.net,icon:'🖥️'},
-      {label:'OTS',val:d.stats.ots,icon:'🚗'},
-    ];
-    stats.forEach(function(s){
-      html += '<div style="background:var(--surface2);border-radius:8px;padding:7px;text-align:center;">';
-      html += '<div style="font-size:13px;">'+s.icon+'</div>';
-      html += '<div style="font-size:14px;font-weight:800;color:var(--text1);line-height:1.1;">'+s.val+'</div>';
-      html += '<div style="font-size:9px;color:var(--text3);">'+s.label+'</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-
-    // Progress bar
-    html += '<div style="background:var(--border);border-radius:99px;height:5px;overflow:hidden;">';
-    html += '<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#1e3a5f,#3b82f6);border-radius:99px;"></div></div>';
-    html += '<div style="font-size:9px;color:var(--text3);text-align:right;margin-top:3px;">'+pct+'% hari kerja diinput</div>';
-
-    // Reminder jika ada hari kosong
-    if(d.missing&&d.missing.length>0){
-      html += '<div style="margin-top:8px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:6px 8px;">';
-      html += '<div style="font-size:10px;font-weight:700;color:#b91c1c;">⚠️ '+d.missing.length+' hari kerja belum diinput</div></div>';
-    }
-
-    el.innerHTML = html;
-  } catch(e){
-    el.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;">Gagal memuat</div>';
-  }
-}
+async 
 
 // ════════════════════════════════════════════════════════════
 //  ADMIN USER MANAGEMENT (Settings)
@@ -6147,29 +6000,34 @@ async function saveMenuConfig(){
 
 // Apply menu config: called after login for PIC role
 function _applyMenuConfig(cfg){
-  // cfg = {id: true/false} dari GAS
-  // true = tampilkan, false = sembunyikan
-  // Semua menu PIC sudah disembunyikan oleh showApp() via managerOnly
-  // Fungsi ini tugasnya: tampilkan hanya yang cfg[id] === true
-  if(!cfg || typeof cfg !== 'object') return;
+  // cfg = {id: true/false} dari Sheet GAS
+  // false = sembunyikan, true atau tidak ada key = tampilkan (default show)
+  if(!cfg || typeof cfg !== 'object') {
+    // Tidak ada config -> tampilkan semua menu PIC
+    PIC_MENU_ITEMS.forEach(function(item){
+      var el = document.getElementById(item.id);
+      if(el) el.style.display = '';
+    });
+    return;
+  }
   var showSec = {};
   PIC_MENU_ITEMS.forEach(function(item){
     if(item.isSection) return;
     var el = document.getElementById(item.id);
     if(!el) return;
-    if(cfg[item.id] === true) {
+    // Default tampil kecuali secara eksplisit di-set false
+    if(cfg[item.id] === false) {
+      el.style.display = 'none';
+    } else {
       el.style.display = '';
       showSec[item.section] = true;
-    } else {
-      el.style.display = 'none';
     }
   });
-  // Section label Log & Laporan
+  // Section label: sembunyikan jika semua item di section tsb hidden
   var secLog = document.getElementById('sb-sec-laporan');
   if(secLog) secLog.style.display = showSec['Log & Laporan'] ? '' : 'none';
-  // Section label Berkas & Upload
   var secUp = document.getElementById('sb-sec-upload-label');
-  if(secUp) secUp.style.display = (cfg['sb-btn-upload'] === true) ? '' : 'none';
+  if(secUp) secUp.style.display = (cfg['sb-btn-upload'] !== false) ? '' : 'none';
 }
 
 // ════════════════════════════════════════════════════════════
