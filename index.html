@@ -1360,12 +1360,13 @@ body{margin:0;overflow-x:hidden;}
       </div>
       <div class="form-group" style="margin-bottom:12px;">
         <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px;">PIN Baru <span style="color:var(--text3);font-weight:400;">(kosongkan jika tidak diubah)</span></label>
-        <input type="password" id="user-modal-pin" placeholder="Min. 4 karakter" class="input-field" style="margin:0;" autocomplete="new-password">
+        <input type="password" id="user-modal-pin" placeholder="4 digit angka" class="input-field" style="margin:0;" maxlength="4" inputmode="numeric" autocomplete="new-password">
       </div>
       <div class="form-group" style="margin-bottom:16px;">
         <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px;">Konfirmasi PIN</label>
-        <input type="password" id="user-modal-pin2" placeholder="Ulangi PIN" class="input-field" style="margin:0;" autocomplete="new-password">
+        <input type="password" id="user-modal-pin2" placeholder="Ulangi PIN" class="input-field" style="margin:0;" maxlength="4" inputmode="numeric" autocomplete="new-password">
       </div>
+      <div id="user-modal-err" style="font-size:12px;color:#dc2626;margin-bottom:8px;min-height:16px;"></div>
       <div style="display:flex;gap:8px;">
         <button class="btn-primary" style="flex:1;margin-top:0;" onclick="saveUserModal()">💾 Simpan</button>
         <button class="btn-outline" onclick="closeUserModal()">Batal</button>
@@ -1416,6 +1417,8 @@ body{margin:0;overflow-x:hidden;}
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 <script>
 function toggleSidebar(){
   var isMobile=window.innerWidth<=600;
@@ -1433,24 +1436,47 @@ function setSbActive(el){
   if(window.innerWidth<=600)closeSidebarMobile();
 }
 function toggleAdminSection(){ loadAdminUsers(); }
+// ── Admin User Management (GAS-based) ─────────────────────────────────────────
+var _adminUsers = [];
+
+async function loadAdminUsers(){
+  var el=document.getElementById('admin-content');
+  if(!el||currentRole!=='manager') return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);">⏳ Memuat data user...</div>';
+  try {
+    var json=await fetchGAS({action:'getUsers',pin:currentPin});
+    if(json.status!=='ok'){el.innerHTML='<div class="no-data">Gagal memuat data user.</div>';return;}
+    _adminUsers=json.data||[];
+    renderAdminPage();
+  } catch(e){el.innerHTML='<div class="no-data">Gagal koneksi.</div>';}
+}
+
 function renderAdminPage(){
   var el=document.getElementById('admin-content');if(!el)return;
   if(currentRole!=='manager'){el.innerHTML='<div class="no-data">Akses ditolak.</div>';return;}
-  var users=getUsers();
-  var rows=users.map(function(u,i){
-    return '<tr style="background:'+(i%2===0?'#fff':'var(--surface2)')+';">'
-      +'<td style="padding:10px 12px;font-weight:600;">'+u.name+'</td>'
-      +'<td style="padding:10px 12px;"><span class="badge" style="background:'+(u.role==='manager'?'#1e3a5f':'#0891b2')+';color:#fff;">'+(u.role==='manager'?'Manager':'PIC')+'</span></td>'
-      +'<td style="padding:10px 12px;font-family:monospace;"><span style="background:var(--surface3);padding:3px 8px;border-radius:4px;">'+u.pin+'</span></td>'
-      +'<td style="padding:10px 12px;"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" '+(u.enabled?'checked':'')+' '+(u.role==='manager'?'disabled':'')+' onchange="toggleUserEnabled('+i+',this.checked)" style="width:16px;height:16px;"><span style="font-size:12px;color:'+(u.enabled?'var(--green)':'#ef4444')+';">'+(u.enabled?'Aktif':'Nonaktif')+'</span></label></td>'
-      +'<td style="padding:10px 8px;"><button class="btn-sm-edit" onclick="openEditUser('+i+')" style="font-size:11px;">✏️ Edit</button></td>'
-      +'</tr>';
+  if(!_adminUsers.length){loadAdminUsers();return;}
+  var rows=_adminUsers.map(function(u,i){
+    var isMgr=u.role==='manager';
+    var safeName=_esc(u.name);
+    var row='<tr style="background:'+(i%2===0?'#fff':'var(--surface2)')+';">';
+    row+='<td style="padding:10px 12px;font-weight:600;">'+safeName+'</td>';
+    row+='<td style="padding:10px 12px;"><span class="badge" style="background:'+(isMgr?'#1e3a5f':'#0891b2')+';color:#fff;">'+(isMgr?'Manager':'PIC')+'</span></td>';
+    row+='<td style="padding:10px 12px;"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;">';
+    row+='<input type="checkbox" '+(u.enabled?'checked':'')+' '+(isMgr?'disabled':'')+' data-uname="'+safeName+'" onchange="_onToggleUser(this)" style="width:16px;height:16px;">';
+    row+='<span style="font-size:12px;color:'+(u.enabled?'var(--green)':'#ef4444')+';">'+(u.enabled?'Aktif':'Nonaktif')+'</span></label></td>';
+    row+='<td style="padding:10px 8px;display:flex;gap:6px;">';
+    if(isMgr){row+='<span style="font-size:11px;color:var(--text3);">—</span>';}
+    else{row+='<button class="btn-sm-edit" data-uname="'+safeName+'" data-uidx="'+i+'" onclick="_onEditUser(this)" style="font-size:11px;">✏️ Edit</button>';
+         row+='<button class="btn-sm-del" data-uname="'+safeName+'" onclick="_onDelUser(this)" style="font-size:11px;">🗑</button>';}
+    row+='</td></tr>';
+    return row;
   }).join('');
   el.innerHTML='<div style="overflow-x:auto;margin-bottom:12px;"><table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;">'
-    +'<thead><tr style="background:#1e3a5f;color:#fff;"><th style="padding:10px 12px;text-align:left;">Nama</th><th style="padding:10px 12px;text-align:left;">Role</th><th style="padding:10px 12px;text-align:left;">PIN</th><th style="padding:10px 12px;text-align:left;">Status</th><th style="padding:10px 12px;text-align:left;">Aksi</th></tr></thead>'
+    +'<thead><tr style="background:#1e3a5f;color:#fff;"><th style="padding:10px 12px;text-align:left;">Nama</th><th style="padding:10px 12px;text-align:left;">Role</th><th style="padding:10px 12px;text-align:left;">Status</th><th style="padding:10px 12px;text-align:left;">Aksi</th></tr></thead>'
     +'<tbody>'+rows+'</tbody></table></div>'
     +'<button class="btn-primary" style="margin-top:0;" onclick="openAddUser()">+ Tambah PIC Baru</button>';
 }
+
 function openAddUser(){
   document.getElementById('user-modal-title').textContent='➕ Tambah PIC Baru';
   document.getElementById('user-modal-idx').value='-1';
@@ -1459,31 +1485,63 @@ function openAddUser(){
   document.getElementById('user-modal-pin2').value='';
   var um=document.getElementById('user-modal');if(um)um.style.display='flex';
 }
-function openEditUser(idx){
-  var u=getUsers()[idx];
-  document.getElementById('user-modal-title').textContent='✏️ Edit — '+u.name;
+
+function openEditUser(name,idx){
+  document.getElementById('user-modal-title').textContent='✏️ Edit — '+name;
   document.getElementById('user-modal-idx').value=idx;
-  document.getElementById('user-modal-name').value=u.name;
+  document.getElementById('user-modal-name').value=name;
   document.getElementById('user-modal-pin').value='';
   document.getElementById('user-modal-pin2').value='';
   var um=document.getElementById('user-modal');if(um)um.style.display='flex';
 }
+
 function closeUserModal(){var el=document.getElementById('user-modal');if(el)el.style.display='none';}
-function saveUserModal(){
+
+async function saveUserModal(){
   var idx=parseInt(document.getElementById('user-modal-idx').value);
   var name=document.getElementById('user-modal-name').value.trim();
   var pin=document.getElementById('user-modal-pin').value.trim();
   var pin2=document.getElementById('user-modal-pin2').value.trim();
   if(!name){showToast('Isi nama user','info');return;}
-  if(pin&&pin!==pin2){showToast('PIN tidak cocok','err');return;}
-  if(pin&&pin.length<4){showToast('PIN min. 4 karakter','info');return;}
-  var users=getUsers();
-  if(pin){var dup=users.findIndex(function(u,i){return u.pin===pin&&i!==idx;});if(dup>=0){showToast('PIN sudah digunakan','err');return;}}
-  if(idx===-1){if(!pin){showToast('PIN wajib untuk user baru','info');return;}users.push({pin:pin,name:name,role:'pic',enabled:true});showToast('User ditambahkan','ok');}
-  else{users[idx].name=name;if(pin)users[idx].pin=pin;showToast('User diupdate','ok');}
-  saveUsers(users);closeUserModal();renderAdminPage();
+  if(!pin){showToast('PIN wajib diisi','info');return;}
+  if(pin.length!==4||!/^\d{4}$/.test(pin)){showToast('PIN harus 4 digit angka','info');return;}
+  if(pin!==pin2){showToast('Konfirmasi PIN tidak cocok','err');return;}
+  var action=idx===-1?'addUser':'editUser';
+  var oldName=idx>=0&&_adminUsers[idx]?_adminUsers[idx].name:'';
+  showOverlay(idx===-1?'Menambah user...':'Menyimpan perubahan...');
+  try {
+    var fd=new FormData();
+    fd.append('data',JSON.stringify({action,pin:currentPin,name,newPin:pin,oldName,role:'pic'}));
+    var res=await fetch(getUrl(),{method:'POST',body:fd});
+    var json=await res.json();
+    hideOverlay();
+    if(json.status==='ok'){showToast(idx===-1?'User ditambahkan':'User diupdate','ok');closeUserModal();await loadAdminUsers();}
+    else showToast(json.message||'Gagal','err');
+  } catch(e){hideOverlay();showToast('Gagal: '+e.message,'err');}
 }
-function toggleUserEnabled(idx,enabled){var users=getUsers();users[idx].enabled=enabled;saveUsers(users);renderAdminPage();showToast(enabled?'User diaktifkan':'User dinonaktifkan','ok');}
+
+async function toggleUserEnabled(name,enabled){
+  try {
+    var fd=new FormData();
+    fd.append('data',JSON.stringify({action:'setUserEnabled',pin:currentPin,name,enabled}));
+    var res=await fetch(getUrl(),{method:'POST',body:fd});
+    var json=await res.json();
+    if(json.status==='ok'){showToast(enabled?'Diaktifkan':'Dinonaktifkan','ok');await loadAdminUsers();}
+    else showToast(json.message||'Gagal','err');
+  } catch(e){showToast('Gagal: '+e.message,'err');}
+}
+
+async function deleteAdminUser(name){
+  if(!confirm('Hapus user "'+name+'"?')) return;
+  try {
+    var fd=new FormData();
+    fd.append('data',JSON.stringify({action:'deleteUser',pin:currentPin,name}));
+    var res=await fetch(getUrl(),{method:'POST',body:fd});
+    var json=await res.json();
+    if(json.status==='ok'){showToast('User dihapus','ok');await loadAdminUsers();}
+    else showToast(json.message||'Gagal','err');
+  } catch(e){showToast('Gagal: '+e.message,'err');}
+}
 function openChangePwd(){
   document.getElementById('pwd-modal-old').value='';
   document.getElementById('pwd-modal-new').value='';
@@ -1585,6 +1643,9 @@ function selectActType(t){
 
   // Re-apply PIC lock setiap kali panel dibuka
   _applyPicLock();
+  // Hide absensi PIC filter for non-manager
+  var absenPicWrap=document.getElementById('absen-pic-filter-wrap');
+  if(absenPicWrap) absenPicWrap.style.display=currentRole==='manager'?'':'none';
 
   // Batasan tanggal: non-manager max hari ini, min 3 hari kebelakang
   const today = new Date();
@@ -1799,6 +1860,9 @@ function showApp(){
   // Dipanggil setelah showApp selesai (lihat doLogin dan window.onload)
   // Lock PIC selects untuk non-manager
   _applyPicLock();
+  // Hide absensi PIC filter for non-manager
+  var absenPicWrap2=document.getElementById('absen-pic-filter-wrap');
+  if(absenPicWrap2) absenPicWrap2.style.display=currentRole==='manager'?'':'none';
 
   // Role-based visibility
   const mbtnSetting = document.getElementById('mbtn-setting');
@@ -2294,7 +2358,10 @@ async function exportOTSExcel(){
 async function exportAbsensiServer(){
   const bulan = document.getElementById('absen-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
   const tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
-  const pic   = document.getElementById('absen-filter-pic')?.value  || '';
+  // Non-manager hanya bisa export data sendiri
+  const pic = currentRole==='manager'
+    ? (document.getElementById('absen-filter-pic')?.value||'')
+    : ((currentUser&&currentUser.name)||'');
   showOverlay('Mengambil data absensi...');
   try {
     const json = await fetchGAS({action:'generateAbsensi', bulan, tahun, pic, pin:currentPin});
@@ -3105,7 +3172,16 @@ function showLogDetail(id){
     </div>
     ${hwRows2}
     ${netRows2}
-    ${!(entry.hw||[]).length && !(entry.net||[]).length ? '<div class="no-data">Tidak ada tiket</div>' : ''}
+    ${ (entry.daily||[]).length ? `
+    <div style="margin-top:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">📓 Daily Activity</div>
+      ${(entry.daily||[]).map((d,i)=>`
+        <div class="ticket" style="background:#fffbeb;border-left:3px solid #f59e0b;padding:10px 12px;border-radius:var(--radius-xs);margin-bottom:6px;">
+          <div style="font-size:12px;font-weight:600;color:#92400e;">${d.ket||'—'}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">📍 ${d.lokasi||'—'}</div>
+        </div>`).join('')}
+    </div>` : '' }
+    ${!(entry.hw||[]).length && !(entry.net||[]).length && !(entry.daily||[]).length ? '<div class="no-data">Tidak ada tiket</div>' : ''}
     <div style="display:flex;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
       <button onclick="closeLogDetailModal()" style="padding:10px 24px;background:var(--surface3);color:var(--text2);border:1.5px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">✕ Tutup</button>
     </div>`;
@@ -4847,9 +4923,9 @@ function renderReportPengajuan(records, bulan){
       <td style="padding:10px 8px;text-align:center;">${hasNota?'<span class="badge badge-green">✓ Ada</span>':'<span class="badge" style="background:#f1f5f9;color:#94a3b8;">Belum</span>'}</td>
       <td style="padding:10px 8px;">
         <div style="display:flex;gap:5px;flex-wrap:wrap;">
-          <button class="btn-sm-edit" onclick="detailPengajuan('${r.id}')">👁 Detail</button>
           <button class="btn-sm-edit" style="background:#eff6ff;color:#2563eb;" onclick="editPengajuanReport('${r.id}')">✏️ Edit</button>
-          <button class="btn-sm-edit" style="background:#faf5ff;color:#7c3aed;border-color:#e9d5ff;" onclick="exportPengajuanPDF(pengajuanById('${r.id}'))">🖨️ PDF</button>
+          <button class="btn-sm-edit" style="background:#fef2f2;color:#b91c1c;border-color:#fca5a5;" onclick="hapusPengajuan('${r.id}')">🗑 Hapus</button>
+          <button class="btn-sm-edit" style="background:#faf5ff;color:#7c3aed;border-color:#e9d5ff;" onclick="exportPengajuanPDF(pengajuanById('${r.id}'))">📄 PDF</button>
         </div>
       </td>
     </tr>`;
@@ -4869,6 +4945,23 @@ function renderReportPengajuan(records, bulan){
     </table>
     <div style="font-size:12px;color:var(--text3);margin-top:8px;text-align:right;">Total: ${filtered.length} pengajuan</div>
   </div>`;
+}
+
+async function hapusPengajuan(id){
+  if(!confirm('Hapus pengajuan ini? Data tidak bisa dikembalikan.')) return;
+  showOverlay('Menghapus pengajuan...');
+  try {
+    var fd=new FormData();
+    fd.append('data',JSON.stringify({action:'deletePengajuan',pin:currentPin,id}));
+    var res=await fetch(getUrl(),{method:'POST',body:fd});
+    var json=await res.json();
+    hideOverlay();
+    if(json.status==='ok'){
+      _pengajuanRecords=(_pengajuanRecords||[]).filter(r=>r.id!==id);
+      showToast('Pengajuan dihapus','ok');
+      renderReportPengajuan(_pengajuanRecords,'');
+    } else showToast('Gagal: '+(json.message||'error'),'err');
+  } catch(e){hideOverlay();showToast('Gagal: '+e.message,'err');}
 }
 
 function pengajuanById(id){
@@ -5028,7 +5121,10 @@ function _applyPicLock(){
 async function loadAbsensi(){
   var bulan = document.getElementById('absen-filter-bulan')?.value || '';
   var tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
-  var pic   = document.getElementById('absen-filter-pic')?.value || '';
+  // Non-manager hanya bisa lihat data sendiri
+  var pic = currentRole==='manager'
+    ? (document.getElementById('absen-filter-pic')?.value||'')
+    : ((currentUser&&currentUser.name)||'');
   var el    = document.getElementById('absensi-content');
   if(!el) return;
   el.innerHTML = '<div class="loading-text">⏳ Menyusun data absensi...</div>';
@@ -6034,6 +6130,120 @@ function _applyMenuConfig(cfg){
 //  EXPORT ABSENSI — local download (already uses XLSX.writeFile)
 //  (Point 1: already works via XLSX.writeFile, just ensure it triggers)
 // ════════════════════════════════════════════════════════════
+
+// ── Berkas PDF Generator dengan Watermark ────────────────────────────────────
+async function _generateBerkasPDF(berkas) {
+  showOverlay('Membuat PDF dengan watermark...');
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+
+    // ── Header kop surat ──────────────────────────────────────
+    doc.setFillColor(30, 58, 95);
+    doc.rect(0, 0, pageW, 28, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.text('CU KELING KUMANG', 14, 10);
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('IT Departemen — Dokumen Resmi', 14, 17);
+    doc.setFontSize(8);
+    doc.text('Diterbitkan: '+new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}), 14, 23);
+
+    // QR-like identifier (unique pattern)
+    const uid = 'ITD-'+Date.now().toString(36).toUpperCase();
+    doc.setFontSize(7); doc.setTextColor(180,220,255);
+    doc.text('ID: '+uid, pageW-14, 23, {align:'right'});
+
+    // ── Judul Dokumen ─────────────────────────────────────────
+    doc.setTextColor(30,58,95);
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text(berkas.title||'Dokumen', pageW/2, 38, {align:'center'});
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    doc.setTextColor(100,100,100);
+    doc.text('Nama File: '+berkas.namaFile, pageW/2, 45, {align:'center'});
+
+    // ── Tabel Info Dokumen ────────────────────────────────────
+    doc.autoTable({
+      startY: 52,
+      head: [['Informasi','Keterangan']],
+      body: [
+        ['Judul/Kategori', berkas.title||'-'],
+        ['Nama File', berkas.namaFile||'-'],
+        ['Tipe File', (berkas.tipe||'-').toUpperCase()],
+        ['Ukuran', (berkas.sizeKB||0)+' KB'],
+        ['Diupload Oleh', berkas.uploader||'-'],
+        ['Waktu Upload', berkas.waktu||'-'],
+        ['ID Dokumen', uid],
+      ],
+      styles: { fontSize:9, cellPadding:3 },
+      headStyles: { fillColor:[30,58,95], textColor:255, fontStyle:'bold' },
+      alternateRowStyles: { fillColor:[245,248,255] },
+      columnStyles: { 0:{fontStyle:'bold', cellWidth:55}, 1:{cellWidth:'auto'} },
+      margin: { left:14, right:14 }
+    });
+
+    // ── Teks info akses file ──────────────────────────────────
+    const afterY = doc.lastAutoTable.finalY + 10;
+    if(berkas.fileUrl && berkas.fileUrl.length > 5){
+      doc.setFontSize(8); doc.setTextColor(80,80,80);
+      doc.text('File asli tersedia di Google Drive:', 14, afterY);
+      doc.setTextColor(30,58,95);
+      doc.textWithLink(berkas.fileUrl.substring(0,80), 14, afterY+5, {url: berkas.fileUrl});
+    }
+
+    // ── WATERMARK diagonal (semua halaman) ───────────────────
+    function addWatermark(pageNum) {
+      doc.setPage(pageNum);
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({opacity:0.07}));
+      doc.setTextColor(30,58,95);
+      doc.setFontSize(19);
+      doc.setFont('helvetica','bold');
+
+      // Diagonal text repeated
+      const wm = 'Diterbitkan oleh IT Departemen CU Keling Kumang';
+      const angle = 40;
+      for(let y=-20; y<pageH+60; y+=38){
+        doc.text(wm, pageW/2, y, {align:'center', angle});
+      }
+      doc.restoreGraphicsState();
+
+      // Border frame
+      doc.setDrawColor(30,58,95);
+      doc.setLineWidth(0.8);
+      doc.rect(8, 8, pageW-16, pageH-16);
+      doc.setLineWidth(0.3);
+      doc.rect(10, 10, pageW-20, pageH-20);
+    }
+
+    // ── Footer ────────────────────────────────────────────────
+    const totalPages = doc.internal.getNumberOfPages();
+    for(let i=1; i<=totalPages; i++){
+      addWatermark(i);
+      doc.setPage(i);
+      doc.setFontSize(7); doc.setTextColor(150,150,150);
+      doc.setFont('helvetica','normal');
+      doc.text('IT Departemen CU Keling Kumang  ·  Dokumen ini diterbitkan secara resmi  ·  '+uid, pageW/2, pageH-5, {align:'center'});
+      doc.text('Halaman '+i+'/'+totalPages, pageW-14, pageH-5, {align:'right'});
+    }
+
+    // ── Download ──────────────────────────────────────────────
+    const fname = (berkas.title||'Dokumen').replace(/[^a-zA-Z0-9 _\-]/g,'')+'_'+uid+'.pdf';
+    doc.save(fname);
+    hideOverlay();
+    showToast('PDF "'+fname+'" berhasil diunduh!','ok');
+  } catch(e) {
+    hideOverlay();
+    showToast('Gagal generate PDF: '+e.message,'err');
+    console.error(e);
+  }
+}
+
+function _onToggleUser(el){ toggleUserEnabled(el.dataset.uname, el.checked); }
+function _onEditUser(el){ openEditUser(el.dataset.uname, parseInt(el.dataset.uidx)); }
+function _onDelUser(el){ deleteAdminUser(el.dataset.uname); }
 
 </script>
 </body>
