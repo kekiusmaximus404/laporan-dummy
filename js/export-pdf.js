@@ -22,6 +22,42 @@ function buildFOOTER(){
   </div>`;
 }
 
+
+// ── Global KOP maker (dipakai exportBerkasPDF & exportPengajuanPDF) ───────────
+function makeGlobalKOP(){
+  return '<table width="100%" style="border-collapse:collapse;margin-bottom:0;"><tr>'
+    + '<td width="85" style="border:none;padding:0;vertical-align:middle;">'
+    + '<img src="'+LOGO_KOP_B64+'" style="height:68px;width:auto;display:block;">'
+    + '</td>'
+    + '<td style="border:none;padding:0 8px;vertical-align:middle;text-align:center;">'
+    + '<div style="font-weight:700;font-size:12.5pt;font-family:Arial;">CU KELING KUMANG</div>'
+    + '<div style="font-size:7.5pt;font-family:Arial;margin-top:2px;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau</div>'
+    + '<div style="font-size:7.5pt;font-family:Arial;">Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513, Kabupaten Sekadau, Kalimantan Barat</div>'
+    + '<div style="font-size:7.5pt;font-family:Arial;">E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</div>'
+    + '</td>'
+    + '<td width="85" style="border:none;padding:0;vertical-align:middle;text-align:right;">'
+    + '<img src="'+LOGO_CUKK_B64+'" style="height:68px;width:auto;display:block;margin-left:auto;">'
+    + '</td>'
+    + '</tr></table>'
+    + '<div style="border-top:3px double #000;margin:6px 0 10px;"></div>';
+}
+
+function makeGlobalFooter(){
+  return '<div style="border-top:1px solid #bbb;margin-top:auto;padding-top:5px;font-size:8pt;font-style:italic;color:#555;font-family:Arial;">'
+    + 'Shared Values: Integrity, Network, Value Creation, Innovation, Credibility, Togetherness, Unity, Speed &nbsp;|&nbsp;'
+    + 'Visi: Menjadi Credit Union Pilihan Utama Masyarakat di Kalimantan'
+    + '</div>';
+}
+
+function makeGlobalPage(content, isLast){
+  return '<div style="width:210mm;min-height:297mm;padding:13mm 14mm 10mm 14mm;box-sizing:border-box;display:flex;flex-direction:column;font-family:Arial;font-size:11pt;color:#000;'+(isLast?'':'page-break-after:always;')+'">'
+    + makeGlobalKOP()
+    + '<div style="flex:1;">'+content+'</div>'
+    + makeGlobalFooter()
+    + '</div>';
+}
+
+
 function buildPage(KOP,titleHtml,bodyHtml,ttdHtml,withFooter=false){
   const FOOTER=withFooter?buildFOOTER():'';
   return `<div style="width:210mm;min-height:297mm;padding:12mm 14mm 10mm 14mm;display:flex;flex-direction:column;page-break-after:always;box-sizing:border-box;">
@@ -283,70 +319,84 @@ function exportBerkasPDF(id) {
   var b = (_berkasAll||[]).find(function(x){ return x.id === id; });
   if (!b) { showToast('Data tidak ditemukan','info'); return; }
 
-  // Jika sudah ada pdfUrl -> buka langsung
+  // Jika sudah ada pdfUrl → buka langsung di tab baru
   if(b.pdfUrl && b.pdfUrl.length > 5) {
     window.open(b.pdfUrl, '_blank');
     return;
   }
 
-  // Fallback: generate halaman info berkas dengan KOP CUKK sama seperti OTS
+  // Generate halaman info berkas dengan watermark
   var tglStr = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  var icon   = typeof _getFileIcon === 'function' ? _getFileIcon(b.namaFile) : '\uD83D\uDCC4';
+  var icon   = typeof _getFileIcon === 'function' ? _getFileIcon(b.namaFile||'') : '📄';
 
+  // Watermark "Arsip resmi IT Departement CU Keling Kumang"
+  var wm = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);'
+    + 'font-size:28pt;font-weight:900;color:rgba(30,58,95,0.06);white-space:nowrap;'
+    + 'text-align:center;pointer-events:none;z-index:0;line-height:2.2;font-family:Arial;">'
+    + 'Arsip Resmi<br>IT Departemen<br>CU Keling Kumang'
+    + '</div>';
 
-  var FOOTER = '<div style="border-top:1px solid #bbb;margin-top:auto;padding-top:5px;font-size:8pt;font-style:italic;color:#555;font-family:Arial;">'
-    +'Shared Values: Integrity, Network, Value Creation, Innovation, Credibility, Togetherness, Unity, Speed &nbsp;|&nbsp;'
-    +'Visi: Menjadi Credit Union Pilihan Utama Masyarakat di Kalimantan</div>';
-
-
-  // Halaman 1 - Info Berkas
-  var body1 = '';
-  body1 += '<h2 style="text-align:center;font-size:13pt;font-weight:700;text-decoration:underline;margin-bottom:16px;">Dokumen Arsip Digital &mdash; IT Departemen</h2>';
-
-  // Info table
-  body1 += '<table width="100%" style="border-collapse:collapse;margin-bottom:16px;">';
-  var infoRows = [
+  var body = '';
+  body += '<h2 style="text-align:center;font-size:13pt;font-weight:700;text-decoration:underline;margin-bottom:16px;">Dokumen Arsip Digital — IT Departemen</h2>';
+  body += '<table width="100%" style="border-collapse:collapse;margin-bottom:16px;">';
+  [
     ['Judul / Kategori', _esc(b.title||'-')],
-    ['Nama File', icon+' '+_esc(b.namaFile||'-')],
-    ['Tipe File', _esc((b.tipe||'-').toUpperCase())],
-    ['Ukuran File', (b.sizeKB||0)+' KB'],
-    ['Folder', _esc(b.folder||'-')],
-    ['Diupload Oleh', _esc(b.uploader||'-')],
-    ['Waktu Upload', _esc(b.waktu||'-')],
-    ['Dicetak', tglStr],
-  ];
-  infoRows.forEach(function(r){
-    body1 += '<tr>';
-    body1 += '<td style="border:1px solid #999;padding:7px 10px;width:35%;font-weight:700;background:#f9fafb;font-size:10pt;">'+r[0]+'</td>';
-    body1 += '<td style="border:1px solid #999;padding:7px 10px;font-size:10pt;">'+r[1]+'</td>';
-    body1 += '</tr>';
+    ['Nama File',        icon+' '+_esc(b.namaFile||'-')],
+    ['Tipe File',        _esc((b.tipe||'-').toUpperCase())],
+    ['Ukuran File',      (b.sizeKB||0)+' KB'],
+    ['Folder',           _esc(b.folder||'-')],
+    ['Diupload Oleh',    _esc(b.uploader||'-')],
+    ['Waktu Upload',     _esc(b.waktu||'-')],
+    ['Dicetak Pada',     tglStr],
+  ].forEach(function(r){
+    body += '<tr>'
+      + '<td style="border:1px solid #999;padding:7px 10px;width:35%;font-weight:700;background:#f9fafb;font-size:10pt;">'+r[0]+'</td>'
+      + '<td style="border:1px solid #999;padding:7px 10px;font-size:10pt;">'+r[1]+'</td>'
+      + '</tr>';
   });
-  body1 += '</table>';
+  body += '</table>';
 
-  // Akses file
   if(b.fileUrl && b.fileUrl.length > 5){
-    body1 += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:12px;margin-bottom:12px;">';
-    body1 += '<div style="font-weight:700;font-size:10pt;color:#1e3a5f;margin-bottom:6px;">\uD83D\uDD17 Akses File</div>';
-    body1 += '<div style="font-size:9pt;color:#1d4ed8;word-break:break-all;">'+_esc(b.fileUrl)+'</div>';
-    body1 += '</div>';
+    body += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:12px;margin-bottom:16px;">'
+      + '<div style="font-weight:700;font-size:10pt;color:#1e3a5f;margin-bottom:6px;">🔗 Akses File Asli</div>'
+      + '<div style="font-size:9pt;color:#1d4ed8;word-break:break-all;">'+_esc(b.fileUrl)+'</div>'
+      + '</div>';
   }
 
-  // Watermark diagonal
-  var wm = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(45deg);font-size:24pt;font-weight:900;color:rgba(30,58,95,0.07);white-space:nowrap;text-align:center;pointer-events:none;z-index:0;line-height:2;">Diterbitkan oleh:<br>Departemen Teknologi Informasi<br>CU Keling Kumang</div>';
+  // TTD arsip
+  body += '<div style="margin-top:24px;">'
+    + '<table width="100%" style="border-collapse:collapse;border:none;">'
+    + '<tr>'
+    + '<td width="50%" style="border:none;text-align:center;vertical-align:top;">'
+    + '<div style="font-size:10pt;">Mengetahui,</div>'
+    + '<div style="font-weight:700;font-size:10pt;">Manager IT Departemen</div>'
+    + '<div style="height:50px;"></div>'
+    + '<div style="border-top:1px solid #000;padding-top:3px;font-weight:700;font-size:10pt;">_______________</div>'
+    + '</td>'
+    + '<td width="50%" style="border:none;text-align:center;vertical-align:top;">'
+    + '<div style="font-size:10pt;">Diarsipkan oleh,</div>'
+    + '<div style="font-weight:700;font-size:10pt;">'+_esc(b.uploader||'IT Departemen')+'</div>'
+    + '<div style="height:50px;"></div>'
+    + '<div style="border-top:1px solid #000;padding-top:3px;font-weight:700;font-size:10pt;">'+_esc(b.uploader||'-')+'</div>'
+    + '</td>'
+    + '</tr>'
+    + '</table>'
+    + '</div>';
 
-  var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Arsip Berkas</title>'
-    +'<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#fff;}'
-    +'@media print{.noprint{display:none!important}}</style>'
-    +'</head><body>'
+  var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Arsip - '+_esc(b.namaFile||'')+'</title>'
+    + '<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#fff;}'
+    + '@page{size:A4 portrait;margin:0;}'
+    + '@media print{.noprint{display:none!important}button{display:none!important}}'
+    + '</style></head><body>'
     + wm
-    + makePage(body1, true)
-    +'<div class="noprint" style="text-align:center;padding:16px;">'
-    +'<button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">\uD83D\uDDB8 Print / Simpan PDF</button>'
-    +'</div>'
-    +'</body></html>';
+    + makeGlobalPage(body, true)
+    + '<div class="noprint" style="text-align:center;padding:16px;">'
+    + '<button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🖨 Print / Simpan PDF</button>'
+    + '</div>'
+    + '</body></html>';
 
   var win = window.open('','_blank');
-  if(!win){ showToast('Popup diblokir browser. Izinkan popup.','info'); return; }
+  if(!win){ showToast('Popup diblokir browser. Izinkan popup untuk export PDF.','info'); return; }
   win.document.write(fullHtml);
   win.document.close();
   setTimeout(function(){ win.print(); }, 600);
