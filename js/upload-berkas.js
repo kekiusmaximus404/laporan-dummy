@@ -3,8 +3,9 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ── Constants & State ────────────────────────────────────
-var _uploadFile = null;
-var _berkasAll  = [];
+var _uploadFile   = null;
+var _berkasAll    = [];
+var _folderList   = [];  // cached folder names from existing berkas
 
 var _FILE_ICONS = {
   pdf:'📕', docx:'📘', doc:'📘', xlsx:'📗', xls:'📗',
@@ -65,9 +66,63 @@ function _setProgress(pct, msg){
   if(txt)  txt.textContent = msg||'';
 }
 
+
+function _initFolderSelector(){
+  // Build folder list from existing berkas data
+  var seen = {};
+  (_berkasAll||[]).forEach(function(b){ if(b.title) seen[b.title]=true; });
+  _folderList = Object.keys(seen).sort();
+  _renderFolderSelector();
+}
+
+function _renderFolderSelector(){
+  var sel  = document.getElementById('upload-folder-select');
+  var newWrap = document.getElementById('upload-newfolder-wrap');
+  if(!sel) return;
+  // Keep current selection
+  var curVal = sel.value;
+  sel.innerHTML = '<option value="">— Pilih folder —</option>';
+  _folderList.forEach(function(f){
+    var opt = document.createElement('option');
+    opt.value = f; opt.textContent = f;
+    sel.appendChild(opt);
+  });
+  var newOpt = document.createElement('option');
+  newOpt.value = '__new__'; newOpt.textContent = '➕ Buat folder baru...';
+  sel.appendChild(newOpt);
+  // Restore selection
+  if(curVal) sel.value = curVal;
+}
+
+function _onFolderSelectChange(){
+  var sel  = document.getElementById('upload-folder-select');
+  var newWrap = document.getElementById('upload-newfolder-wrap');
+  var newInput = document.getElementById('upload-newfolder-input');
+  if(!sel||!newWrap) return;
+  if(sel.value === '__new__'){
+    newWrap.style.display = 'flex';
+    if(newInput) newInput.focus();
+  } else {
+    newWrap.style.display = 'none';
+  }
+}
+
+function _getSelectedFolder(){
+  var sel  = document.getElementById('upload-folder-select');
+  var newInput = document.getElementById('upload-newfolder-input');
+  if(!sel) return '';
+  if(sel.value === '__new__'){
+    var newName = (newInput ? newInput.value.trim() : '');
+    if(!newName){ showToast('Isi nama folder baru dulu','info'); return null; }
+    return newName;
+  }
+  return sel.value;
+}
+
 async function doUploadBerkas(){
-  var title = (document.getElementById('upload-title')?.value||'').trim();
-  if(!title){ showToast('Isi Judul / Kategori Dokumen dulu','info'); document.getElementById('upload-title')?.focus(); return; }
+  var title = _getSelectedFolder();
+  if(title === null) return; // error shown by _getSelectedFolder
+  if(!title){ showToast('Pilih atau buat folder dokumen dulu','info'); document.getElementById('upload-folder-select')?.focus(); return; }
   if(!_uploadFile){ showToast('Pilih file terlebih dahulu','info'); return; }
 
   var maxSize = 15*1024*1024; // 15MB
@@ -120,7 +175,12 @@ async function doUploadBerkas(){
         showToast('✅ Upload berhasil! (File Word/Excel dapat diconvert ke PDF via tombol PDF)','ok');
       }
       _clearUploadFile();
-      document.getElementById('upload-title').value='';
+      var _sel = document.getElementById('upload-folder-select');
+      if(_sel) _sel.value = '';
+      var _nw = document.getElementById('upload-newfolder-input');
+      if(_nw) _nw.value = '';
+      var _nwWrap = document.getElementById('upload-newfolder-wrap');
+      if(_nwWrap) _nwWrap.style.display = 'none';
       loadBerkasList();
     } else {
       showToast('Gagal: '+(json.message||'error'),'err');
@@ -141,6 +201,7 @@ async function loadBerkasList(){
     if(json.status!=='ok'){ el.innerHTML='<div class="no-data">Gagal memuat data.</div>'; return; }
     _berkasAll = json.data||[];
     _renderBerkasList(_berkasAll);
+    _initFolderSelector();
   } catch(e){
     el.innerHTML='<div class="no-data">Gagal koneksi.</div>';
   }
