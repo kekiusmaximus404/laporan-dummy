@@ -3,16 +3,21 @@
 // ═══════════════════════════════════════════════════════════════
 
 function buildKOP(){
-  return `<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px double #000;padding-bottom:8px;margin-bottom:12px;">
-    <img src="${LOGO_KOP_B64}" style="height:65px;width:auto;object-fit:contain;">
-    <div style="text-align:center;flex:1;padding:0 12px;">
-      <div style="font-weight:700;font-size:14px;">CU KELING KUMANG</div>
-      <div style="font-size:10px;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau</div>
-      <div style="font-size:10px;">Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513, Kabupaten Sekadau, Kalimantan Barat</div>
-      <div style="font-size:10px;">E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</div>
-    </div>
-    <img src="${LOGO_CUKK_B64}" style="height:65px;width:auto;object-fit:contain;">
-  </div>`;
+  return `<table width="100%" style="border-collapse:collapse;margin-bottom:0;"><tr>
+    <td width="80" style="border:none;padding:0;vertical-align:middle;">
+      <img src="${LOGO_KOP_B64}" style="height:68px;width:auto;display:block;">
+    </td>
+    <td style="border:none;padding:0 10px;vertical-align:middle;text-align:center;">
+      <div style="font-weight:700;font-size:13pt;font-family:Arial;">CU KELING KUMANG</div>
+      <div style="font-size:7pt;font-family:Arial;margin-top:3px;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas - Tapang Kemayau, Desa Tapang Semadak</div>
+      <div style="font-size:7pt;font-family:Arial;">Kecamatan Sekadau Hilir, Kabupaten Sekadau, Kalimantan Barat 79513</div>
+      <div style="font-size:7pt;font-family:Arial;">E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</div>
+    </td>
+    <td width="145" style="border:none;padding:0;vertical-align:middle;text-align:right;">
+      <img src="${LOGO_CUKK_B64}" style="height:42px;width:auto;display:block;margin-left:auto;">
+    </td>
+  </tr></table>
+  <div style="border-top:3px double #000;margin:6px 0 10px;"></div>`;
 }
 
 function buildFOOTER(){
@@ -23,20 +28,23 @@ function buildFOOTER(){
 }
 
 
-// ── Global KOP maker (dipakai exportBerkasPDF & exportPengajuanPDF) ───────────
+// ── Global KOP maker ─────────────────────────────────────────────
 function makeGlobalKOP(){
   return '<table width="100%" style="border-collapse:collapse;margin-bottom:0;"><tr>'
-    + '<td width="85" style="border:none;padding:0;vertical-align:middle;">'
+    // Logo Koperasi - kiri, height 68px
+    + '<td width="80" style="border:none;padding:0;vertical-align:middle;">'
     + '<img src="'+LOGO_KOP_B64+'" style="height:68px;width:auto;display:block;">'
     + '</td>'
-    + '<td style="border:none;padding:0 8px;vertical-align:middle;text-align:center;">'
-    + '<div style="font-weight:700;font-size:12.5pt;font-family:Arial;">CU KELING KUMANG</div>'
-    + '<div style="font-size:7.5pt;font-family:Arial;margin-top:2px;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau</div>'
-    + '<div style="font-size:7.5pt;font-family:Arial;">Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513, Kabupaten Sekadau, Kalimantan Barat</div>'
-    + '<div style="font-size:7.5pt;font-family:Arial;">E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</div>'
+    // Teks tengah - 4 baris, center
+    + '<td style="border:none;padding:0 10px;vertical-align:middle;text-align:center;">'
+    + '<div style="font-weight:700;font-size:13pt;font-family:Arial;letter-spacing:0.5px;">CU KELING KUMANG</div>'
+    + '<div style="font-size:7pt;font-family:Arial;margin-top:3px;color:#222;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas - Tapang Kemayau, Desa Tapang Semadak</div>'
+    + '<div style="font-size:7pt;font-family:Arial;color:#222;">Kecamatan Sekadau Hilir, Kabupaten Sekadau, Kalimantan Barat 79513</div>'
+    + '<div style="font-size:7pt;font-family:Arial;color:#222;">E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</div>'
     + '</td>'
-    + '<td width="85" style="border:none;padding:0;vertical-align:middle;text-align:right;">'
-    + '<img src="'+LOGO_CUKK_B64+'" style="height:68px;width:auto;display:block;margin-left:auto;">'
+    // Logo CUKK - kanan, height 42px agar sejajar dengan 4 baris teks
+    + '<td width="145" style="border:none;padding:0;vertical-align:middle;text-align:right;">'
+    + '<img src="'+LOGO_CUKK_B64+'" style="height:42px;width:auto;display:block;margin-left:auto;">'
     + '</td>'
     + '</tr></table>'
     + '<div style="border-top:3px double #000;margin:6px 0 10px;"></div>';
@@ -98,17 +106,17 @@ function _exportFromRecord(r){
   // KOP — pakai variable JS yang sudah ada
   function makeKOP(){
     return `<table width="100%" style="border-collapse:collapse;margin-bottom:0;"><tr>
-      <td width="85" style="border:none;padding:0;vertical-align:middle;">
+      <td width="80" style="border:none;padding:0;vertical-align:middle;">
         <img src="${LOGO_KOP_B64}" style="height:68px;width:auto;display:block;">
       </td>
-      <td style="border:none;padding:0 8px;vertical-align:middle;text-align:center;">
-        <div style="font-weight:700;font-size:12.5pt;font-family:Arial;">CU KELING KUMANG</div>
-        <div style="font-size:7.5pt;font-family:Arial;margin-top:2px;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau</div>
-        <div style="font-size:7.5pt;font-family:Arial;">Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513, Kabupaten Sekadau, Kalimantan Barat</div>
-        <div style="font-size:7.5pt;font-family:Arial;">E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</div>
+      <td style="border:none;padding:0 10px;vertical-align:middle;text-align:center;">
+        <div style="font-weight:700;font-size:13pt;font-family:Arial;">CU KELING KUMANG</div>
+        <div style="font-size:7pt;font-family:Arial;margin-top:3px;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas - Tapang Kemayau, Desa Tapang Semadak</div>
+        <div style="font-size:7pt;font-family:Arial;">Kecamatan Sekadau Hilir, Kabupaten Sekadau, Kalimantan Barat 79513</div>
+        <div style="font-size:7pt;font-family:Arial;">E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</div>
       </td>
-      <td width="85" style="border:none;padding:0;vertical-align:middle;text-align:right;">
-        <img src="${LOGO_CUKK_B64}" style="height:68px;width:auto;display:block;margin-left:auto;">
+      <td width="145" style="border:none;padding:0;vertical-align:middle;text-align:right;">
+        <img src="${LOGO_CUKK_B64}" style="height:42px;width:auto;display:block;margin-left:auto;">
       </td>
     </tr></table>
     <div style="border-top:3px double #000;margin:6px 0 10px;"></div>`;
