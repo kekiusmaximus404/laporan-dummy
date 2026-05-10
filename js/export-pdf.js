@@ -138,12 +138,17 @@ function _exportFromRecord(r){
   }
 
   // ── HAL 1: JURNAL KEGIATAN ────────────────────────────────
-  const kegRows = kegiatan.length > 0
+  // Auto-fit: sesuaikan padding & font-size berdasarkan jumlah kegiatan
+  var kegCount = kegiatan.length || 0;
+  var kegPad   = kegCount > 15 ? '3px 6px' : kegCount > 10 ? '4px 7px' : '6px 8px';
+  var kegFont  = kegCount > 15 ? '9pt' : kegCount > 10 ? '10pt' : '11pt';
+  var tdS = 'border:1px solid #999;padding:'+kegPad+';font-size:'+kegFont+';';
+  var kegRows = kegiatan.length > 0
     ? kegiatan.map((k,i)=>`<tr>
-        <td style="border:1px solid #999;padding:6px 8px;text-align:center;vertical-align:top;">${k.no||i+1}</td>
-        <td style="border:1px solid #999;padding:6px 8px;vertical-align:top;">${k.kegiatan||'-'}</td>
-        <td style="border:1px solid #999;padding:6px 8px;vertical-align:top;">${k.hasil||'-'}</td>
-        <td style="border:1px solid #999;padding:6px 8px;text-align:center;vertical-align:top;">ALL Team</td>
+        <td style="${tdS}text-align:center;vertical-align:top;width:28px;">${k.no||i+1}</td>
+        <td style="${tdS}vertical-align:top;width:35%;">${k.kegiatan||'-'}</td>
+        <td style="${tdS}vertical-align:top;">${k.hasil||'-'}</td>
+        <td style="${tdS}text-align:center;vertical-align:top;width:70px;">ALL Team</td>
       </tr>`).join('')
     : `<tr><td colspan="4" style="border:1px solid #999;padding:14px;text-align:center;color:#999;">—</td></tr>`;
 
@@ -172,13 +177,13 @@ function _exportFromRecord(r){
       </tr></thead>
       <tbody>${kegRows}</tbody>
     </table>
-    <div style="border:1px solid #999;padding:9px 12px;background:#fffde7;margin-bottom:16px;">
+    <div style="border:1px solid #999;padding:${kegCount>12?'5px 10px':'9px 12px'};background:#fffde7;margin-bottom:${kegCount>12?'8px':'16px'};">
       <b>Catatan :</b>
-      <ol style="margin:7px 0 5px 0;padding-left:18px;line-height:1.65;font-size:10.5pt;">
-        <li>Setelah menggunakan perangkat, matikan dan tinggalkan dalam kondisi bersih dan rapi untuk mengurangi terjadi resiko kerusakan.</li>
-        <li>Pastikan Listrik dalam kondisi stabil saat menyalakan perangkat. Alat yang rusak segera lapor ke ITD <i>Call Center</i> 082255186993.</li>
-        <li>Operasikan program sesuai prosedur (Cara <i>login</i> dan <i>log off/exit</i>, penggunaan menu). Lakukan <i>refresh menu</i> setelah banyak melakukan transaksi di SIP dan exit program jika tidak digunakan / tidak bekerja.</li>
-        <li>Untuk kendala program / jaringan / perangkat komputer bisa langsung telepon ke PIC Area, Admin IT atau Staf ITD.</li>
+      <ol style="margin:4px 0 3px 0;padding-left:18px;line-height:1.5;font-size:${kegCount>12?'8.5pt':'10pt'};">
+        <li>Setelah menggunakan perangkat, matikan dan tinggalkan dalam kondisi bersih dan rapi.</li>
+        <li>Pastikan Listrik dalam kondisi stabil saat menyalakan perangkat. Lapor ke ITD <i>Call Center</i> 082255186993.</li>
+        <li>Operasikan program sesuai prosedur. Lakukan <i>refresh menu</i> setelah banyak transaksi di SIP.</li>
+        <li>Kendala program / jaringan / perangkat: hubungi PIC Area, Admin IT atau Staf ITD.</li>
       </ol>
       <b>*** Harap dibaca !!!</b>
     </div>
@@ -323,57 +328,99 @@ function exportOtsPDF(){
   _exportFromRecord({bo,tgl,namaBo,jabatanBo,petugasSerah,timIT,kegiatan,adaSerah,serahKe,bawaPulang,fotos:otsFotos});
 }
 
-function exportBerkasPDF(id) {
+async function exportBerkasPDF(id) {
   var b = (_berkasAll||[]).find(function(x){ return x.id === id; });
   if (!b) { showToast('Data tidak ditemukan','info'); return; }
 
-  // Jika sudah ada pdfUrl → buka langsung di tab baru
-  if(b.pdfUrl && b.pdfUrl.length > 5) {
-    window.open(b.pdfUrl, '_blank');
-    return;
+  var fileId = '';
+  var url    = b.fileUrl || '';
+  var m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (!m) m = url.match(/id=([a-zA-Z0-9_-]+)/);
+  if (m) fileId = m[1];
+
+  // Jika ada fileId → convert via GAS → download PDF asli (WYSIWYG)
+  if (fileId) {
+    showOverlay('Mengonversi ' + (b.namaFile||'file') + ' ke PDF...');
+    try {
+      var json = await fetchGAS({action:'convertBerkasToPdf', pin:currentPin, fileId:fileId});
+      hideOverlay();
+      if (json.status === 'ok' && json.base64) {
+        var byteChars = atob(json.base64);
+        var byteArr   = new Uint8Array(byteChars.length);
+        for (var i=0;i<byteChars.length;i++) byteArr[i]=byteChars.charCodeAt(i);
+        var blob = new Blob([byteArr],{type:'application/pdf'});
+        var burl = URL.createObjectURL(blob);
+        var a    = document.createElement('a');
+        a.href   = burl;
+        a.download = (b.namaFile||'file').replace(/\.[^.]+$/,'') + '.pdf';
+        document.body.appendChild(a); a.click();
+        setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(burl); }, 1000);
+        showToast('PDF berhasil diunduh!','ok');
+        return;
+      }
+    } catch(e){ hideOverlay(); }
+    // Jika GAS gagal → fallback ke halaman info
   }
 
-  // Generate halaman info berkas dengan watermark
-  var tglStr = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  var icon   = typeof _getFileIcon === 'function' ? _getFileIcon(b.namaFile||'') : '📄';
+  // Fallback: 2-halaman info dokumen dengan watermark
+  var tglStr   = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var icon     = typeof _getFileIcon === 'function' ? _getFileIcon(b.namaFile||'') : '📄';
+  var tglUpload= b.waktu ? new Date(b.waktu).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : (b.waktu||'-');
 
-  // Watermark "Arsip resmi IT Departement CU Keling Kumang"
+  // Watermark
   var wm = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);'
-    + 'font-size:28pt;font-weight:900;color:rgba(30,58,95,0.06);white-space:nowrap;'
+    + 'font-size:22pt;font-weight:900;color:rgba(30,58,95,0.055);white-space:nowrap;'
     + 'text-align:center;pointer-events:none;z-index:0;line-height:2.2;font-family:Arial;">'
     + 'Arsip Resmi<br>IT Departemen<br>CU Keling Kumang'
     + '</div>';
 
-  var body = '';
-  body += '<h2 style="text-align:center;font-size:13pt;font-weight:700;text-decoration:underline;margin-bottom:16px;">Dokumen Arsip Digital — IT Departemen</h2>';
-  body += '<table width="100%" style="border-collapse:collapse;margin-bottom:16px;">';
+  // ── Halaman 1: Sertifikat Arsip ──────────────────────────
+  var body1 = '';
+  body1 += '<div style="text-align:center;margin-bottom:20px;">'
+    + '<div style="display:inline-block;background:#1e3a5f;color:#fff;padding:6px 24px;border-radius:99px;font-size:9pt;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Sertifikat Arsip Digital</div>'
+    + '</div>';
+  body1 += '<h2 style="text-align:center;font-size:14pt;font-weight:700;margin-bottom:4px;color:#1e3a5f;">'
+    + _esc(b.title||'Dokumen') + '</h2>';
+  body1 += '<div style="text-align:center;font-size:10pt;color:#666;margin-bottom:20px;">'
+    + 'IT Departemen &mdash; CU Keling Kumang</div>';
+
+  // Info table
+  body1 += '<table width="100%" style="border-collapse:collapse;margin-bottom:20px;font-size:10pt;">';
   [
+    ['No. Dokumen',    b.id||'-'],
     ['Judul / Kategori', _esc(b.title||'-')],
-    ['Nama File',        icon+' '+_esc(b.namaFile||'-')],
-    ['Tipe File',        _esc((b.tipe||'-').toUpperCase())],
-    ['Ukuran File',      (b.sizeKB||0)+' KB'],
-    ['Folder',           _esc(b.folder||'-')],
-    ['Diupload Oleh',    _esc(b.uploader||'-')],
-    ['Waktu Upload',     _esc(b.waktu||'-')],
-    ['Dicetak Pada',     tglStr],
+    ['Nama File',      icon + ' ' + _esc(b.namaFile||'-')],
+    ['Tipe File',      _esc((b.tipe||'-').toUpperCase().replace(/VND\.OPENXMLFORMATS-OFFICEDOCUMENT\.|APPLICATION\//g,'').replace('WORDPROCESSINGML.DOCUMENT','WORD / DOCX').replace('SPREADSHEETML.SHEET','EXCEL / XLSX').replace('PRESENTATIONML.PRESENTATION','POWERPOINT / PPTX'))],
+    ['Ukuran File',    (b.sizeKB||0) + ' KB'],
+    ['Folder',         _esc(b.folder||'-')],
+    ['Diupload Oleh',  _esc(b.uploader||'-')],
+    ['Waktu Upload',   tglUpload],
+    ['Dicetak Pada',   tglStr],
   ].forEach(function(r){
-    body += '<tr>'
-      + '<td style="border:1px solid #999;padding:7px 10px;width:35%;font-weight:700;background:#f9fafb;font-size:10pt;">'+r[0]+'</td>'
-      + '<td style="border:1px solid #999;padding:7px 10px;font-size:10pt;">'+r[1]+'</td>'
+    body1 += '<tr>'
+      + '<td style="border:1px solid #ddd;padding:8px 12px;width:38%;font-weight:700;background:#f8fafc;font-size:10pt;">' + r[0] + '</td>'
+      + '<td style="border:1px solid #ddd;padding:8px 12px;font-size:10pt;">' + r[1] + '</td>'
       + '</tr>';
   });
-  body += '</table>';
+  body1 += '</table>';
 
+  // Akses file
   if(b.fileUrl && b.fileUrl.length > 5){
-    body += '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:12px;margin-bottom:16px;">'
-      + '<div style="font-weight:700;font-size:10pt;color:#1e3a5f;margin-bottom:6px;">🔗 Akses File Asli</div>'
-      + '<div style="font-size:9pt;color:#1d4ed8;word-break:break-all;">'+_esc(b.fileUrl)+'</div>'
+    body1 += '<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:20px;">'
+      + '<div style="font-weight:700;font-size:10pt;color:#1e3a5f;margin-bottom:5px;">🔗 Akses File Asli di Google Drive</div>'
+      + '<div style="font-size:8.5pt;color:#1d4ed8;word-break:break-all;">' + _esc(b.fileUrl) + '</div>'
+      + '</div>';
+  }
+  if(b.pdfUrl && b.pdfUrl.length > 5){
+    body1 += '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:20px;">'
+      + '<div style="font-weight:700;font-size:10pt;color:#065f46;margin-bottom:5px;">📄 Versi PDF di Google Drive</div>'
+      + '<div style="font-size:8.5pt;color:#16a34a;word-break:break-all;">' + _esc(b.pdfUrl) + '</div>'
       + '</div>';
   }
 
-  // TTD arsip
-  body += '<div style="margin-top:24px;">'
-    + '<table width="100%" style="border-collapse:collapse;border:none;">'
+  // TTD
+  body1 += '<div style="margin-top:auto;">'
+    + '<table width="100%" style="border-collapse:collapse;border:none;margin-top:24px;">'
     + '<tr>'
     + '<td width="50%" style="border:none;text-align:center;vertical-align:top;">'
     + '<div style="font-size:10pt;">Mengetahui,</div>'
@@ -383,28 +430,59 @@ function exportBerkasPDF(id) {
     + '</td>'
     + '<td width="50%" style="border:none;text-align:center;vertical-align:top;">'
     + '<div style="font-size:10pt;">Diarsipkan oleh,</div>'
-    + '<div style="font-weight:700;font-size:10pt;">'+_esc(b.uploader||'IT Departemen')+'</div>'
+    + '<div style="font-weight:700;font-size:10pt;">' + _esc(b.uploader||'IT Departemen') + '</div>'
     + '<div style="height:50px;"></div>'
-    + '<div style="border-top:1px solid #000;padding-top:3px;font-weight:700;font-size:10pt;">'+_esc(b.uploader||'-')+'</div>'
+    + '<div style="border-top:1px solid #000;padding-top:3px;font-weight:700;font-size:10pt;">' + _esc(b.uploader||'-') + '</div>'
     + '</td>'
-    + '</tr>'
-    + '</table>'
+    + '</tr></table></div>';
+
+  // ── Halaman 2: Riwayat & Keterangan Tambahan ─────────────
+  var body2 = '';
+  body2 += '<h3 style="font-size:13pt;font-weight:700;margin-bottom:16px;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;">Keterangan Pengarsipan</h3>';
+  body2 += '<table width="100%" style="border-collapse:collapse;margin-bottom:20px;font-size:10pt;">';
+  body2 += '<tr><td style="border:1px solid #ddd;padding:10px 12px;width:38%;font-weight:700;background:#f8fafc;">Sistem Arsip</td>'
+    + '<td style="border:1px solid #ddd;padding:10px 12px;">IT Departemen Digital Archive — CU Keling Kumang</td></tr>';
+  body2 += '<tr><td style="border:1px solid #ddd;padding:10px 12px;font-weight:700;background:#f8fafc;">Kategori Dokumen</td>'
+    + '<td style="border:1px solid #ddd;padding:10px 12px;">' + _esc(b.title||'-') + '</td></tr>';
+  body2 += '<tr><td style="border:1px solid #ddd;padding:10px 12px;font-weight:700;background:#f8fafc;">Diarsipkan Tanggal</td>'
+    + '<td style="border:1px solid #ddd;padding:10px 12px;">' + tglUpload + '</td></tr>';
+  body2 += '<tr><td style="border:1px solid #ddd;padding:10px 12px;font-weight:700;background:#f8fafc;">Nama File Asli</td>'
+    + '<td style="border:1px solid #ddd;padding:10px 12px;">' + icon + ' ' + _esc(b.namaFile||'-') + '</td></tr>';
+  body2 += '<tr><td style="border:1px solid #ddd;padding:10px 12px;font-weight:700;background:#f8fafc;">Ukuran File</td>'
+    + '<td style="border:1px solid #ddd;padding:10px 12px;">' + (b.sizeKB||0) + ' KB</td></tr>';
+  body2 += '</table>';
+
+  body2 += '<div style="background:#fef9c3;border:1.5px solid #fde68a;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:10pt;">'
+    + '<div style="font-weight:700;color:#92400e;margin-bottom:8px;">📌 Catatan Penting</div>'
+    + '<ul style="margin:0;padding-left:18px;line-height:2;color:#78350f;">'
+    + '<li>Dokumen ini merupakan sertifikat pengarsipan digital.</li>'
+    + '<li>File asli tersimpan di Google Drive IT Departemen CUKK.</li>'
+    + '<li>Untuk melihat isi dokumen, gunakan link pada halaman 1.</li>'
+    + '<li>Jika link tidak dapat diakses, hubungi IT Departemen.</li>'
+    + '</ul></div>';
+
+  body2 += '<div style="text-align:center;margin-top:20px;padding:16px;background:#1e3a5f;border-radius:10px;color:#fff;">'
+    + '<div style="font-size:9pt;opacity:0.8;letter-spacing:1px;text-transform:uppercase;">Dokumen Resmi</div>'
+    + '<div style="font-size:13pt;font-weight:800;margin:4px 0;">IT Departemen CUKK</div>'
+    + '<div style="font-size:8pt;opacity:0.7;">CU Keling Kumang &mdash; Kalimantan Barat</div>'
     + '</div>';
 
-  var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Arsip - '+_esc(b.namaFile||'')+'</title>'
-    + '<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#fff;}'
+  var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    + '<title>Arsip — ' + _esc(b.namaFile||'Dokumen') + '</title>'
+    + '<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#fff;font-family:Arial,sans-serif;}'
     + '@page{size:A4 portrait;margin:0;}'
-    + '@media print{.noprint{display:none!important}button{display:none!important}}'
+    + '@media print{.noprint{display:none!important}}'
     + '</style></head><body>'
     + wm
-    + makeGlobalPage(body, true)
+    + makeGlobalPage(body1, false)
+    + makeGlobalPage(body2, true)
     + '<div class="noprint" style="text-align:center;padding:16px;">'
-    + '<button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🖨 Print / Simpan PDF</button>'
+    + '<button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🖨 Print / Simpan PDF (2 Halaman)</button>'
     + '</div>'
     + '</body></html>';
 
   var win = window.open('','_blank');
-  if(!win){ showToast('Popup diblokir browser. Izinkan popup untuk export PDF.','info'); return; }
+  if(!win){ showToast('Popup diblokir browser. Izinkan popup.','info'); return; }
   win.document.write(fullHtml);
   win.document.close();
   setTimeout(function(){ win.print(); }, 600);
