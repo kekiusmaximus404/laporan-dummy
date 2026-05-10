@@ -108,7 +108,12 @@ function showApp(){
   const bulanEl = document.getElementById('ots-filter-bulan');
   if(bulanEl && BULAN_NAMES) bulanEl.value = BULAN_NAMES[now.getMonth()];
 
-  // Tampilkan HOME screen langsung
+  // Tampilkan HOME screen langsung — clear stale data dari user sebelumnya
+  if(typeof _picDashData !== 'undefined') _picDashData = null;
+  var _staleBody = document.getElementById('pic-dash-body');
+  if(_staleBody) _staleBody.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">⏳ Memuat data...</div>';
+  var _mgrPicList = document.getElementById('mgr-pic-list');
+  if(_mgrPicList) _mgrPicList.innerHTML = '';
   document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.menu-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.sub-bar').forEach(b=>b.style.display='none');
