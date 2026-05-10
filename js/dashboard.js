@@ -104,13 +104,22 @@ function _renderPicDashboard(d){
   html += '<div style="font-size:11px;color:var(--text3);margin-top:4px;text-align:right;">'+pct+'% hari kerja</div></div>';
 
   // Stats grid
+  // ── Kunjungan Lapangan (OTS) - card besar ───────────────────
+  html += '<div style="background:linear-gradient(135deg,#4c1d95,#7c3aed);border-radius:12px;padding:14px 18px;margin-bottom:8px;color:#fff;display:flex;align-items:center;gap:16px;">';
+  html += '<div style="font-size:36px;flex-shrink:0;">🚗</div>';
+  html += '<div style="flex:1;">';
+  html += '<div style="font-size:11px;font-weight:600;opacity:0.8;text-transform:uppercase;letter-spacing:0.05em;">Kunjungan Lapangan (OTS) Bulan Ini</div>';
+  html += '<div style="font-size:32px;font-weight:900;line-height:1.1;margin-top:2px;">' + d.stats.ots + ' <span style="font-size:14px;font-weight:500;opacity:0.85;">kunjungan</span></div>';
+  html += '<div style="font-size:11px;opacity:0.75;margin-top:2px;">' + _hesc(d.bulan) + '</div>';
+  html += '</div></div>';
+
   var stats = [
-    {label:'Tiket Hardware', val:d.stats.hw, icon:'🖥️', color:'#3b82f6'},
-    {label:'Tiket Jaringan', val:d.stats.net, icon:'🌐', color:'#0891b2'},
-    {label:'Daily Activity', val:d.stats.daily, icon:'📓', color:'#f59e0b'},
-    {label:'OTS / TL',       val:d.stats.ots, icon:'🚗', color:'#7c3aed'},
-    {label:'Selesai',        val:d.stats.selesai, icon:'✅', color:'#059669'},
-    {label:'Eskalasi',       val:d.stats.eskalasi, icon:'🚨', color:'#dc2626'},
+    {label:'Tiket Hardware',  val:d.stats.hw,      icon:'🖥️', color:'#3b82f6'},
+    {label:'Tiket Jaringan',  val:d.stats.net,     icon:'🌐', color:'#0891b2'},
+    {label:'Daily Activity',  val:d.stats.daily,   icon:'📓', color:'#f59e0b'},
+    {label:'Hari Hadir Input',val:d.stats.totalDaysLogged, icon:'📅', color:'#059669'},
+    {label:'Tiket Selesai',   val:d.stats.selesai, icon:'✅', color:'#059669'},
+    {label:'Eskalasi',        val:d.stats.eskalasi,icon:'🚨', color:'#dc2626'},
   ];
   html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">';
   stats.forEach(function(s){
