@@ -5,24 +5,40 @@
 async function loadAbsensi(){
   var bulan = document.getElementById('absen-filter-bulan')?.value || '';
   var tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
-  // Non-manager hanya bisa lihat data sendiri
-  var pic = currentRole==='manager'
-    ? (document.getElementById('absen-filter-pic')?.value||'')
-    : ((currentUser&&currentUser.name)||'');
-  var el    = document.getElementById('absensi-content');
-  if(!el) return;
-  el.innerHTML = '<div class="loading-text">⏳ Menyusun data absensi...</div>';
+  // Non-manager: PAKSA pic ke nama sendiri, sembunyikan dropdown
+  var picEl = document.getElementById('absen-filter-pic');
+  var picWrap = picEl ? picEl.closest('.form-group') : null;
+  if(currentRole !== 'manager'){
+    if(picWrap) picWrap.style.display = 'none';
+    var pic = (currentUser && currentUser.name) || '';
+    if(!pic){ showToast('Nama user tidak ditemukan','err'); return; }
+    if(!bulan){ showToast('Pilih bulan terlebih dahulu','info'); return; }
+    showOverlay('Memuat absensi...');
+    try {
+      var json = await fetchGAS({action:'generateAbsensi', pin:currentPin, bulan, tahun, pic});
+      hideOverlay();
+      if(json.status!=='ok'||!json.data?.length){
+        document.getElementById('absensi-content').innerHTML='<div class="no-data"><div class="no-data-icon">📋</div>Tidak ada data absensi untuk periode ini.</div>';
+        return;
+      }
+      renderAbsensiPreview(json.data, bulan, tahun);
+    } catch(e){ hideOverlay(); showToast('Gagal: '+e.message,'err'); }
+    return;
+  }
+  // Manager: bisa pilih semua PIC
+  if(picWrap) picWrap.style.display = '';
+  var pic = picEl ? (picEl.value||'') : '';
+  if(!bulan){ showToast('Pilih bulan terlebih dahulu','info'); return; }
+  showOverlay('Memuat absensi...');
   try {
-    var json = await fetchGAS({action:'generateAbsensi', bulan, tahun, pic, pin: currentPin});
-    if(json.status !== 'ok' || !json.data || !json.data.length){
-      el.innerHTML = '<div class="no-data"><div class="no-data-icon">📋</div>Tidak ada data untuk periode ini.</div>';
+    var json = await fetchGAS({action:'generateAbsensi', pin:currentPin, bulan, tahun, pic});
+    hideOverlay();
+    if(json.status!=='ok'||!json.data?.length){
+      document.getElementById('absensi-content').innerHTML='<div class="no-data"><div class="no-data-icon">📋</div>Tidak ada data absensi.</div>';
       return;
     }
-    _absensiData = json.data;
-    renderAbsensiPreview(_absensiData);
-  } catch(e) {
-    el.innerHTML = '<div class="no-data">Gagal koneksi.</div>';
-  }
+    renderAbsensiPreview(json.data, bulan, tahun);
+  } catch(e){ hideOverlay(); showToast('Gagal: '+e.message,'err'); }
 }
 
 function renderAbsensiPreview(dataArr){
@@ -99,6 +115,8 @@ async function exportAbsensiServer(){
   const pic   = currentRole==='manager'
     ? (document.getElementById('absen-filter-pic')?.value||'')
     : ((currentUser&&currentUser.name)||'');
+  // Validasi pic untuk non-manager
+  if(currentRole!=='manager' && !pic){ showToast('Nama user tidak ditemukan','err'); return; }
 
   if(!bulan){ showToast('Pilih bulan terlebih dahulu','info'); return; }
 
