@@ -183,7 +183,7 @@ window.onload = function(){
 
 function switchMenu(menu){
   currentMenu=menu;
-  var titles={home:'Beranda',input:'Input Data',log:'Log Harian',report:'Report',setting:'Pengaturan',upload:'ITD Upload'};
+  var titles={home:'Beranda',input:'Input Data',log:'Log Harian',report:'Report',setting:'Pengaturan',upload:'ITD Upload',grafik:'Dashboard Grafik'};
   var el=document.getElementById('top-bar-title');if(el&&titles[menu])el.textContent=titles[menu];
   document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('active');});
   if(menu==='home'){var p=document.getElementById('pane-home');if(p)p.classList.add('active');if(typeof _initHomePic==='function')_initHomePic();}
