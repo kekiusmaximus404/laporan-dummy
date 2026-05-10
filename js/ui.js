@@ -137,12 +137,24 @@ window.onload = function(){
         currentUser={pin:savedPin,name:_vj.data.name,role:_vj.data.role,enabled:true,menuConfig:_vj.data.menuConfig||{}};
         currentPin=savedPin;currentRole=_vj.data.role;
         _cacheMyUser(currentUser);
+        localStorage.setItem('hn_menu_cfg', JSON.stringify(_vj.data.menuConfig||{}));
+        localStorage.setItem('hn_user', JSON.stringify(currentUser));
         showApp();
-        if(_vj.data.role !== 'manager') _applyMenuConfig(_vj.data.menuConfig||{});
+        if(_vj.data.role !== 'manager'){
+          setTimeout(function(){ _applyMenuConfig(_vj.data.menuConfig||{}); }, 50);
+        }
       } else { localStorage.removeItem('hn_pin'); localStorage.removeItem('hn_role'); }
     } catch(e){
       // Fallback: pakai cache lokal jika GAS tidak bisa diakses
-      if(savedUser2){currentUser=savedUser2;currentPin=savedPin;currentRole=savedUser2.role;showApp();}
+      if(savedUser2){
+        currentUser=savedUser2;currentPin=savedPin;currentRole=savedUser2.role;
+        showApp();
+        if(savedUser2.role !== 'manager'){
+          var cachedCfg = {};
+          try{ var _mc=localStorage.getItem('hn_menu_cfg'); if(_mc) cachedCfg=JSON.parse(_mc); }catch(e){}
+          setTimeout(function(){ _applyMenuConfig(cachedCfg); }, 50);
+        }
+      }
     }
   }
   else {
