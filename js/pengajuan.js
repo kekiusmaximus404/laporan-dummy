@@ -232,7 +232,7 @@ function uploadNota(id, input){
         showToast('Nota berhasil diupload!','ok');
         closeOTSModal();
         // Re-open detail dengan data baru
-        setTimeout(()=>showDetailPengajuan(id),200);
+        showDetailPengajuan(id);
       } else {
         if(previewEl) previewEl.textContent='❌ Gagal upload';
         showToast('Gagal: '+(json.message||'error'),'err');
@@ -353,7 +353,7 @@ async function simpanPengajuan(){
       statusEl.textContent='✅ Berhasil disimpan!';
       // Cetak PDF
       exportPengajuanPDF({id,tempat,tgl,ket,items,notas:[]});
-      setTimeout(()=>{resetPengajuanForm();},1500);
+      resetPengajuanForm();
     } else {
       statusEl.style.background='#ffebee';
       statusEl.style.color='#c62828';
