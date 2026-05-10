@@ -146,7 +146,7 @@ window.onload = function(){
         localStorage.setItem('hn_user', JSON.stringify(currentUser));
         showApp();
         if(_vj.data.role !== 'manager'){
-          setTimeout(function(){ _applyMenuConfig(_vj.data.menuConfig||{}); }, 200);
+          _applyMenuConfig(_vj.data.menuConfig||{});
         }
       } else { localStorage.removeItem('hn_pin'); localStorage.removeItem('hn_role'); }
     } catch(e){
@@ -157,7 +157,7 @@ window.onload = function(){
         if(savedUser2.role !== 'manager'){
           var cachedCfg = {};
           try{ var _mc=localStorage.getItem('hn_menu_cfg'); if(_mc) cachedCfg=JSON.parse(_mc); }catch(e){}
-          setTimeout(function(){ _applyMenuConfig(cachedCfg); }, 200);
+          _applyMenuConfig(cachedCfg);
         }
       }
     }
