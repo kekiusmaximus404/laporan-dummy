@@ -56,8 +56,8 @@ function showApp(){
   // Lock PIC selects untuk non-manager
   _applyPicLock();
   // Hide absensi PIC filter for non-manager
-  var absenPicWrap2=document.getElementById('absen-pic-filter-wrap');
-  if(absenPicWrap2) absenPicWrap2.style.display=currentRole==='manager'?'':'none';
+  var _apwrap=document.getElementById('absen-pic-filter-wrap');
+  if(_apwrap) _apwrap.style.display=currentRole==='manager'?'':'none';
 
   // Role-based visibility
   const mbtnSetting = document.getElementById('mbtn-setting');
