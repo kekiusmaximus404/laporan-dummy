@@ -340,152 +340,57 @@ async function exportBerkasPDF(id) {
   if (!m) m = url.match(/id=([a-zA-Z0-9_-]+)/);
   if (m) fileId = m[1];
 
-  // Jika ada fileId → convert via GAS → download PDF asli (WYSIWYG)
+  // ── Strategy 1: Convert file asli via GAS → dapat PDF biner asli ──────────
   if (fileId) {
     showOverlay('Mengonversi ' + (b.namaFile||'file') + ' ke PDF...');
     try {
       var json = await fetchGAS({action:'convertBerkasToPdf', pin:currentPin, fileId:fileId});
       hideOverlay();
       if (json.status === 'ok' && json.base64) {
-        var byteChars = atob(json.base64);
-        var byteArr   = new Uint8Array(byteChars.length);
-        for (var i=0;i<byteChars.length;i++) byteArr[i]=byteChars.charCodeAt(i);
-        var blob = new Blob([byteArr],{type:'application/pdf'});
-        var burl = URL.createObjectURL(blob);
-        var a    = document.createElement('a');
-        a.href   = burl;
-        a.download = (b.namaFile||'file').replace(/\.[^.]+$/,'') + '.pdf';
-        document.body.appendChild(a); a.click();
-        setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(burl); }, 1000);
-        showToast('PDF berhasil diunduh!','ok');
+        // Dapat PDF asli → embed ke iframe + watermark via print CSS
+        _openPdfWithWatermark(json.base64, b.namaFile||'dokumen');
         return;
       }
     } catch(e){ hideOverlay(); }
-    // Jika GAS gagal → fallback ke halaman info
   }
 
-  // Fallback: 2-halaman info dokumen dengan watermark
-  var tglStr   = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  var icon     = typeof _getFileIcon === 'function' ? _getFileIcon(b.namaFile||'') : '📄';
-  var tglUpload= b.waktu ? new Date(b.waktu).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : (b.waktu||'-');
-
-  // Watermark
-  var wm = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);'
-    + 'font-size:22pt;font-weight:900;color:rgba(30,58,95,0.055);white-space:nowrap;'
-    + 'text-align:center;pointer-events:none;z-index:0;line-height:2.2;font-family:Arial;">'
-    + 'Arsip Resmi<br>IT Departemen<br>CU Keling Kumang'
-    + '</div>';
-
-  // ── Halaman 1: Sertifikat Arsip ──────────────────────────
-  var body1 = '';
-  body1 += '<div style="text-align:center;margin-bottom:20px;">'
-    + '<div style="display:inline-block;background:#1e3a5f;color:#fff;padding:6px 24px;border-radius:99px;font-size:9pt;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Sertifikat Arsip Digital</div>'
-    + '</div>';
-  body1 += '<h2 style="text-align:center;font-size:14pt;font-weight:700;margin-bottom:4px;color:#1e3a5f;">'
-    + _esc(b.title||'Dokumen') + '</h2>';
-  body1 += '<div style="text-align:center;font-size:10pt;color:#666;margin-bottom:20px;">'
-    + 'IT Departemen &mdash; CU Keling Kumang</div>';
-
-  // Info table
-  body1 += '<table width="100%" style="border-collapse:collapse;margin-bottom:20px;font-size:10pt;">';
-  [
-    ['No. Dokumen',    b.id||'-'],
-    ['Judul / Kategori', _esc(b.title||'-')],
-    ['Nama File',      icon + ' ' + _esc(b.namaFile||'-')],
-    ['Tipe File',      _esc((b.tipe||'-').toUpperCase().replace(/VND\.OPENXMLFORMATS-OFFICEDOCUMENT\.|APPLICATION\//g,'').replace('WORDPROCESSINGML.DOCUMENT','WORD / DOCX').replace('SPREADSHEETML.SHEET','EXCEL / XLSX').replace('PRESENTATIONML.PRESENTATION','POWERPOINT / PPTX'))],
-    ['Ukuran File',    (b.sizeKB||0) + ' KB'],
-    ['Folder',         _esc(b.folder||'-')],
-    ['Diupload Oleh',  _esc(b.uploader||'-')],
-    ['Waktu Upload',   tglUpload],
-    ['Dicetak Pada',   tglStr],
-  ].forEach(function(r){
-    body1 += '<tr>'
-      + '<td style="border:1px solid #ddd;padding:8px 12px;width:38%;font-weight:700;background:#f8fafc;font-size:10pt;">' + r[0] + '</td>'
-      + '<td style="border:1px solid #ddd;padding:8px 12px;font-size:10pt;">' + r[1] + '</td>'
-      + '</tr>';
-  });
-  body1 += '</table>';
-
-  // Akses file
-  if(b.fileUrl && b.fileUrl.length > 5){
-    body1 += '<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:20px;">'
-      + '<div style="font-weight:700;font-size:10pt;color:#1e3a5f;margin-bottom:5px;">🔗 Akses File Asli di Google Drive</div>'
-      + '<div style="font-size:8.5pt;color:#1d4ed8;word-break:break-all;">' + _esc(b.fileUrl) + '</div>'
-      + '</div>';
+  // ── Strategy 2: Fallback — buka iframe dari Drive URL langsung ──────────────
+  if (b.pdfUrl && b.pdfUrl.length > 5) {
+    _openDriveUrlWithWatermark(b.pdfUrl, b);
+    return;
   }
-  if(b.pdfUrl && b.pdfUrl.length > 5){
-    body1 += '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:20px;">'
-      + '<div style="font-weight:700;font-size:10pt;color:#065f46;margin-bottom:5px;">📄 Versi PDF di Google Drive</div>'
-      + '<div style="font-size:8.5pt;color:#16a34a;word-break:break-all;">' + _esc(b.pdfUrl) + '</div>'
-      + '</div>';
+  if (b.fileUrl && b.fileUrl.length > 5) {
+    _openDriveUrlWithWatermark(b.fileUrl, b);
+    return;
   }
 
-  // TTD
-  body1 += '<div style="margin-top:auto;">'
-    + '<table width="100%" style="border-collapse:collapse;border:none;margin-top:24px;">'
-    + '<tr>'
-    + '<td width="50%" style="border:none;text-align:center;vertical-align:top;">'
-    + '<div style="font-size:10pt;">Mengetahui,</div>'
-    + '<div style="font-weight:700;font-size:10pt;">Manager IT Departemen</div>'
-    + '<div style="height:50px;"></div>'
-    + '<div style="border-top:1px solid #000;padding-top:3px;font-weight:700;font-size:10pt;">_______________</div>'
-    + '</td>'
-    + '<td width="50%" style="border:none;text-align:center;vertical-align:top;">'
-    + '<div style="font-size:10pt;">Diarsipkan oleh,</div>'
-    + '<div style="font-weight:700;font-size:10pt;">' + _esc(b.uploader||'IT Departemen') + '</div>'
-    + '<div style="height:50px;"></div>'
-    + '<div style="border-top:1px solid #000;padding-top:3px;font-weight:700;font-size:10pt;">' + _esc(b.uploader||'-') + '</div>'
-    + '</td>'
-    + '</tr></table></div>';
+  showToast('Tidak ada file yang bisa diexport','info');
+}
 
-  // ── Halaman 2: Riwayat & Keterangan Tambahan ─────────────
-  var body2 = '';
-  body2 += '<h3 style="font-size:13pt;font-weight:700;margin-bottom:16px;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;">Keterangan Pengarsipan</h3>';
-  body2 += '<table width="100%" style="border-collapse:collapse;margin-bottom:20px;font-size:10pt;">';
-  body2 += '<tr><td style="border:1px solid #ddd;padding:10px 12px;width:38%;font-weight:700;background:#f8fafc;">Sistem Arsip</td>'
-    + '<td style="border:1px solid #ddd;padding:10px 12px;">IT Departemen Digital Archive — CU Keling Kumang</td></tr>';
-  body2 += '<tr><td style="border:1px solid #ddd;padding:10px 12px;font-weight:700;background:#f8fafc;">Kategori Dokumen</td>'
-    + '<td style="border:1px solid #ddd;padding:10px 12px;">' + _esc(b.title||'-') + '</td></tr>';
-  body2 += '<tr><td style="border:1px solid #ddd;padding:10px 12px;font-weight:700;background:#f8fafc;">Diarsipkan Tanggal</td>'
-    + '<td style="border:1px solid #ddd;padding:10px 12px;">' + tglUpload + '</td></tr>';
-  body2 += '<tr><td style="border:1px solid #ddd;padding:10px 12px;font-weight:700;background:#f8fafc;">Nama File Asli</td>'
-    + '<td style="border:1px solid #ddd;padding:10px 12px;">' + icon + ' ' + _esc(b.namaFile||'-') + '</td></tr>';
-  body2 += '<tr><td style="border:1px solid #ddd;padding:10px 12px;font-weight:700;background:#f8fafc;">Ukuran File</td>'
-    + '<td style="border:1px solid #ddd;padding:10px 12px;">' + (b.sizeKB||0) + ' KB</td></tr>';
-  body2 += '</table>';
+// Buka PDF base64 di window baru, tambah watermark overlay saat print
+function _openPdfWithWatermark(base64, namaFile) {
+  var dataUrl = 'data:application/pdf;base64,' + base64;
+  var wmText  = 'Diterbitkan ITD CU Keling Kumang';
 
-  body2 += '<div style="background:#fef9c3;border:1.5px solid #fde68a;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:10pt;">'
-    + '<div style="font-weight:700;color:#92400e;margin-bottom:8px;">📌 Catatan Penting</div>'
-    + '<ul style="margin:0;padding-left:18px;line-height:2;color:#78350f;">'
-    + '<li>Dokumen ini merupakan sertifikat pengarsipan digital.</li>'
-    + '<li>File asli tersimpan di Google Drive IT Departemen CUKK.</li>'
-    + '<li>Untuk melihat isi dokumen, gunakan link pada halaman 1.</li>'
-    + '<li>Jika link tidak dapat diakses, hubungi IT Departemen.</li>'
-    + '</ul></div>';
-
-  body2 += '<div style="text-align:center;margin-top:20px;padding:16px;background:#1e3a5f;border-radius:10px;color:#fff;">'
-    + '<div style="font-size:9pt;opacity:0.8;letter-spacing:1px;text-transform:uppercase;">Dokumen Resmi</div>'
-    + '<div style="font-size:13pt;font-weight:800;margin:4px 0;">IT Departemen CUKK</div>'
-    + '<div style="font-size:8pt;opacity:0.7;">CU Keling Kumang &mdash; Kalimantan Barat</div>'
-    + '</div>';
-
-  var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    + '<title>Arsip — ' + _esc(b.namaFile||'Dokumen') + '</title>'
-    + '<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#fff;font-family:Arial,sans-serif;}'
-    + '@page{size:A4 portrait;margin:0;}'
-    + '@media print{.noprint{display:none!important}}'
-    + '</style></head><body>'
-    + wm
-    + makeGlobalPage(body1, false)
-    + makeGlobalPage(body2, true)
-    + '<div class="noprint" style="text-align:center;padding:16px;">'
-    + '<button onclick="window.print()" style="padding:10px 28px;background:#1e3a5f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🖨 Print / Simpan PDF (2 Halaman)</button>'
-    + '</div>'
-    + '</body></html>';
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'    + '<title>' + _esc(namaFile) + '</title>'    + '<style>'    + '*{margin:0;padding:0;box-sizing:border-box;}'    + 'body{background:#525659;display:flex;flex-direction:column;align-items:center;min-height:100vh;}'    + '.toolbar{width:100%;background:#323639;padding:10px 20px;display:flex;align-items:center;gap:12px;position:fixed;top:0;left:0;z-index:100;}'    + '.toolbar button{background:#1e3a5f;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;}'    + '.toolbar span{color:#ccc;font-size:13px;flex:1;}'    + '.viewer{margin-top:56px;width:100%;display:flex;flex-direction:column;align-items:center;padding:20px 0;}'    + 'iframe{width:850px;max-width:100%;height:1100px;border:none;box-shadow:0 4px 24px rgba(0,0,0,0.4);}'    + '@media print{'    + '.toolbar{display:none!important;}'    + '.viewer{margin:0;padding:0;}'    + 'iframe{width:100%;height:100vh;box-shadow:none;}'    + '.wm-print{display:block!important;}'    + '}'    + '.wm-print{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);'    + 'font-size:28pt;font-weight:900;color:rgba(30,58,95,0.12);white-space:nowrap;'    + 'text-align:center;pointer-events:none;z-index:9999;line-height:2;font-family:Arial;}'    + '</style></head><body>'    + '<div class="toolbar">'    + '<span>📄 ' + _esc(namaFile) + '</span>'    + '<button onclick="window.print()">🖨 Print / Simpan PDF</button>'    + '<button onclick="window.close()">✕ Tutup</button>'    + '</div>'    + '<div class="viewer">'    + '<iframe src="' + dataUrl + '"></iframe>'    + '</div>'    + '<div class="wm-print">' + wmText + '</div>'    + '</body></html>';
 
   var win = window.open('','_blank');
   if(!win){ showToast('Popup diblokir browser. Izinkan popup.','info'); return; }
-  win.document.write(fullHtml);
+  win.document.write(html);
   win.document.close();
-  setTimeout(function(){ win.print(); }, 600);
+}
+
+// Fallback: buka file dari Drive URL di iframe
+function _openDriveUrlWithWatermark(driveUrl, b) {
+  // Convert view URL to preview/embed URL
+  var embedUrl = driveUrl.replace('/view','/preview').replace('/edit','/preview');
+  var wmText   = 'Diterbitkan ITD CU Keling Kumang';
+  var namaFile = (b && b.namaFile) || 'Dokumen';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'    + '<title>' + _esc(namaFile) + '</title>'    + '<style>'    + '*{margin:0;padding:0;box-sizing:border-box;}'    + 'body{background:#525659;display:flex;flex-direction:column;align-items:center;min-height:100vh;}'    + '.toolbar{width:100%;background:#323639;padding:10px 20px;display:flex;align-items:center;gap:12px;position:fixed;top:0;left:0;z-index:100;}'    + '.toolbar a,.toolbar button{background:#1e3a5f;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;}'    + '.toolbar span{color:#ccc;font-size:13px;flex:1;}'    + '.viewer{margin-top:56px;width:100%;display:flex;flex-direction:column;align-items:center;padding:20px 0;}'    + 'iframe{width:850px;max-width:100%;height:1100px;border:none;box-shadow:0 4px 24px rgba(0,0,0,0.4);}'    + '.wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);'    + 'font-size:28pt;font-weight:900;color:rgba(255,255,255,0.07);white-space:nowrap;'    + 'text-align:center;pointer-events:none;z-index:50;line-height:2;font-family:Arial;}'    + '</style></head><body>'    + '<div class="toolbar">'    + '<span>📄 ' + _esc(namaFile) + '</span>'    + '<a href="' + driveUrl + '" target="_blank">⬇ Buka di Drive</a>'    + '<button onclick="window.close()">✕ Tutup</button>'    + '</div>'    + '<div class="viewer"><iframe src="' + embedUrl + '"></iframe></div>'    + '<div class="wm">' + wmText + '</div>'    + '</body></html>';
+
+  var win = window.open('','_blank');
+  if(!win){ showToast('Popup diblokir browser. Izinkan popup.','info'); return; }
+  win.document.write(html);
+  win.document.close();
 }
