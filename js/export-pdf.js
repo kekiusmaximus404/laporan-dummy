@@ -35,19 +35,21 @@ function makeGlobalKOP(){
     + '<td width="80" style="border:none;padding:0;vertical-align:middle;">'
     + '<img src="'+LOGO_KOP_B64+'" style="height:68px;width:auto;display:block;">'
     + '</td>'
-    // Teks tengah - 4 baris, center
+    // Teks tengah - format sama persis dengan dokumen asli
     + '<td style="border:none;padding:0 10px;vertical-align:middle;text-align:center;">'
     + '<div style="font-weight:700;font-size:13pt;font-family:Arial;letter-spacing:0.5px;">CU KELING KUMANG</div>'
-    + '<div style="font-size:7pt;font-family:Arial;margin-top:3px;color:#222;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas - Tapang Kemayau, Desa Tapang Semadak</div>'
-    + '<div style="font-size:7pt;font-family:Arial;color:#222;">Kecamatan Sekadau Hilir, Kabupaten Sekadau, Kalimantan Barat 79513</div>'
-    + '<div style="font-size:7pt;font-family:Arial;color:#222;">E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</div>'
+    + '<div style="font-size:7pt;font-family:Arial;margin-top:3px;color:#222;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau</div>'
+    + '<div style="font-size:7pt;font-family:Arial;color:#222;">Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513</div>'
+    + '<div style="font-size:7pt;font-family:Arial;color:#222;">Kabupaten Sekadau, Kalimantan Barat, Indonesia</div>'
+    + '<div style="font-size:7pt;font-family:Arial;color:#222;">E-mail: <span style="text-decoration:underline;">invictus93@cukelingkumang.com;</span> Website: <span style="text-decoration:underline;">www.cukelingkumang.com</span></div>'
+    + '<div style="font-size:7pt;font-family:Arial;color:#222;">Telp./WA : (+628)115711132</div>'
     + '</td>'
-    // Logo CUKK - kanan, height 42px agar sejajar dengan 4 baris teks
+    // Logo CUKK - kanan
     + '<td width="145" style="border:none;padding:0;vertical-align:middle;text-align:right;">'
     + '<img src="'+LOGO_CUKK_B64+'" style="height:42px;width:auto;display:block;margin-left:auto;">'
     + '</td>'
     + '</tr></table>'
-    + '<div style="border-top:3px double #000;margin:6px 0 10px;"></div>';
+    + '<div style="border-top:3px solid #000;border-bottom:1px solid #000;margin:6px 0 10px;height:3px;"></div>';
 }
 
 function makeGlobalFooter(){
