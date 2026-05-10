@@ -94,41 +94,72 @@ function _formatKegiatanHuman(raw){
 }
 
 async function exportAbsensiServer(){
-  const bulan = document.getElementById('absen-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
+  const bulan = document.getElementById('absen-filter-bulan')?.value || '';
   const tahun = document.getElementById('absen-filter-tahun')?.value || String(new Date().getFullYear());
   const pic   = currentRole==='manager'
     ? (document.getElementById('absen-filter-pic')?.value||'')
     : ((currentUser&&currentUser.name)||'');
 
-  showOverlay('Menyiapkan Excel Absensi...');
+  if(!bulan){ showToast('Pilih bulan terlebih dahulu','info'); return; }
+
+  showOverlay('Mengambil data absensi...');
   try {
-    // POST ke GAS — GAS build xlsx server-side, return base64
-    const fd = new FormData();
-    fd.append('data', JSON.stringify({
-      action:'exportAbsensiExcel', pin:currentPin,
+    // Ambil data dari GAS
+    const json = await fetchGAS({
+      action:'generateAbsensi', pin:currentPin,
       bulan, tahun, pic
-    }));
-    const res  = await fetch(getUrl(), {method:'POST', body:fd});
-    const json = await res.json();
+    });
     hideOverlay();
 
-    if(json.status!=='ok' || !json.base64){
-      showToast((json.message)||'Tidak ada data absensi','info'); return;
+    if(json.status!=='ok' || !json.data?.length){
+      showToast('Tidak ada data absensi untuk periode ini','info'); return;
     }
 
-    // Decode base64 → Blob → download lokal
-    const byteChars = atob(json.base64);
-    const byteArr   = new Uint8Array(byteChars.length);
-    for(let i=0;i<byteChars.length;i++) byteArr[i]=byteChars.charCodeAt(i);
-    const blob = new Blob([byteArr],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href=url; a.download=json.filename||('Absensi_'+bulan+'_'+tahun+'.xlsx');
+    showOverlay('Menyusun Excel...');
+
+    // Build XLSX di frontend — tidak ada HTML, tidak ada issue encoding
+    const wb = XLSX.utils.book_new();
+
+    json.data.forEach(function(picData){
+      const shName = ((picData.pic||'PIC').split(' ')[0] + '_' + bulan).substring(0,31);
+      const rows   = [['Hari','Tanggal','Kegiatan / Keterangan','Lokasi','Status']];
+
+      (picData.rows||[]).forEach(function(r){
+        rows.push([
+          r.hari   || '',
+          r.tgl    || '',
+          r.kegiatan || '',
+          r.lokasi || '',
+          r.status || ''
+        ]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+
+      // Lebar kolom
+      ws['!cols'] = [{wch:10},{wch:12},{wch:50},{wch:22},{wch:10}];
+
+      // Style header (warna gelap) — SheetJS CE tidak support cell style,
+      // tapi kita tandai dengan freeze row
+      ws['!freeze'] = {xSplit:0, ySplit:1};
+
+      XLSX.utils.book_append_sheet(wb, ws, shName);
+    });
+
+    hideOverlay();
+
+    const fname = 'Absensi_' + bulan + '_' + tahun + (pic ? '_'+pic.split(' ')[0] : '') + '.xlsx';
+    const wbOut = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const blob  = new Blob([wbOut], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url   = URL.createObjectURL(blob);
+    const a     = document.createElement('a');
+    a.href = url; a.download = fname;
     document.body.appendChild(a); a.click();
-    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },1000);
-    showToast('File '+a.download+' diunduh!','ok');
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    showToast('File ' + fname + ' diunduh!', 'ok');
+
   } catch(e){
     hideOverlay();
-    showToast('Gagal: '+e.message,'err');
+    showToast('Gagal export: '+e.message,'err');
   }
 }
