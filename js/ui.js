@@ -47,7 +47,7 @@ function showApp(){
     ['sb-btn-pengajuan','sb-btn-rep-barang','sb-btn-rep-pengajuan',
      'sb-btn-rep-maintenance','sb-btn-rep-ots','sb-btn-upload',
      'sb-sec-upload-label','sb-sec-laporan','mbtn-log','sb-btn-rep-absensi',
-     'sb-btn-maintenance','sb-btn-ots'].forEach(function(id){
+     'sb-btn-maintenance','sb-btn-ots','sb-btn-grafik','sb-sec-analitik'].forEach(function(id){
       var el=document.getElementById(id);
       if(el) el.style.display='';
     });
@@ -194,6 +194,7 @@ function switchMenu(menu){
   }
   else if(menu==='setting'){var p=document.getElementById('pane-setting');if(p)p.classList.add('active');var ac=document.getElementById('admin-card');if(ac)ac.style.display=currentRole==='manager'?'block':'none';if(currentRole==='manager')loadAdminUsers();}
   else if(menu==='upload'){var p=document.getElementById('pane-upload');if(p)p.classList.add('active');loadBerkasList();}
+  else if(menu==='grafik'){var p=document.getElementById('pane-grafik');if(p)p.classList.add('active');if(typeof _initGrafik==='function')_initGrafik();}
   else if(menu==='input'){
     var subs=['maintenance','ots','pengajuan'];
     var s=subs.indexOf(currentSub)>=0?currentSub:'maintenance';
