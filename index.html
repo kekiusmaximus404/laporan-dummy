@@ -1198,10 +1198,38 @@ body{margin:0;overflow-x:hidden;}
     <!-- HOME DASHBOARD -->
     <div id="pane-home" class="pane">
       <!-- Manager: splash -->
-      <div id="home-manager" style="min-height:calc(100vh - 54px);background:linear-gradient(135deg,#1e3a5f 0%,#0f2a47 100%);display:flex;align-items:center;justify-content:center;">
-        <div style="text-align:center;color:rgba(255,255,255,0.12);">
-          <div style="font-size:80px;font-weight:800;letter-spacing:-4px;line-height:1;">HN</div>
-          <div style="font-size:14px;letter-spacing:6px;text-transform:uppercase;margin-top:8px;">IT Departemen</div>
+      <div id="home-manager" style="min-height:calc(100vh - 54px);background:var(--bg);overflow-y:auto;">
+        <div style="max-width:700px;margin:0 auto;padding:28px 16px;">
+          <!-- Header banner -->
+          <div style="background:linear-gradient(135deg,#1e3a5f 0%,#0f2a47 100%);border-radius:18px;padding:28px 32px;margin-bottom:20px;color:#fff;position:relative;overflow:hidden;">
+            <div style="position:absolute;right:-20px;bottom:-20px;font-size:120px;font-weight:900;color:rgba(255,255,255,0.05);line-height:1;pointer-events:none;">HN</div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;opacity:0.6;margin-bottom:8px;">IT DEPARTEMEN · CUKK</div>
+            <div style="font-size:22px;font-weight:800;margin-bottom:6px;" id="mgr-greeting">Selamat datang!</div>
+            <div style="font-size:13px;opacity:0.75;" id="mgr-date">—</div>
+          </div>
+          <!-- Quick stats -->
+          <div id="mgr-quick-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+            <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;">
+              <div style="font-size:28px;">👥</div>
+              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-top:6px;">Manajemen User</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">Kelola PIC & akses</div>
+            </div>
+            <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;">
+              <div style="font-size:28px;">📊</div>
+              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-top:6px;">Report Lengkap</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">Semua laporan tersedia</div>
+            </div>
+            <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;">
+              <div style="font-size:28px;">📁</div>
+              <div style="font-size:11px;font-weight:600;color:var(--text2);margin-top:6px;">ITD Upload</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">Kelola berkas digital</div>
+            </div>
+          </div>
+          <!-- Info -->
+          <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px 20px;color:var(--text2);font-size:13px;text-align:center;">
+            <div style="font-size:15px;margin-bottom:6px;">CU Keling Kumang — Sistem Laporan IT Departemen</div>
+            <div style="font-size:11px;color:var(--text3);">Pilih menu di sidebar untuk mulai bekerja</div>
+          </div>
         </div>
       </div>
       <!-- PIC: personal dashboard -->
