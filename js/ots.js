@@ -390,10 +390,10 @@ function renderEditOTSModal(r){
       <div><label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;display:block;margin-bottom:4px;">Petugas IT (TTD)</label>
         <select id="edit-ots-petugas" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;">
           <option value="">— pilih —</option>
-          <option ${r.petugasSerah==='Abet Nego, S.Kom'?'selected':''}>Abet Nego</option>
-          <option ${r.petugasSerah==='Goprid Tendo Padagi, S.Kom'?'selected':''}>Goprid Tendo Padagi</option>
-          <option ${r.petugasSerah==='Petrus Evan Budiargo, S.Bns'?'selected':''}>Evan Budiargo</option>
-          <option ${r.petugasSerah==='Hardianto Candra, S.Kom'?'selected':''}>Herniumus Chandra</option>
+          <option ${r.petugasSerah==='Abet Nego'?'selected':''}>Abet Nego</option>
+          <option ${r.petugasSerah==='Goprid Tendo Padagi'?'selected':''}>Goprid Tendo Padagi</option>
+          <option ${r.petugasSerah==='Petrus Petrus Evan Budiargo'?'selected':''}>Petrus Evan Budiargo</option>
+          <option ${r.petugasSerah==='Hardianto Candra'?'selected':''}>Hardianto Candra</option>
         </select></div>
     </div>
     <div style="margin-bottom:14px;">
