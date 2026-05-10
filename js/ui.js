@@ -66,7 +66,12 @@ function showApp(){
     // Section labels dikontrol oleh _applyMenuConfig - jangan hide di sini
     // agar tidak perlu counter-hide
   }
-  // PIC: _applyMenuConfig dipanggil dari auth.js setelah showApp
+  // PIC: langsung apply menu config dari cache agar menu sudah tampil sebelum GAS verify selesai
+  if(!isManager){
+    var _cachedCfgNow = {};
+    try{ var _mcNow=localStorage.getItem('hn_menu_cfg'); if(_mcNow) _cachedCfgNow=JSON.parse(_mcNow); }catch(e){}
+    _applyMenuConfig(_cachedCfgNow);
+  }
   // Lock PIC selects untuk non-manager
   _applyPicLock();
   // Hide absensi PIC filter for non-manager
