@@ -346,57 +346,65 @@ function exportExcelBarang(){
 }
 
 async function exportOTSExcel(){
-  const bulan = document.getElementById('ots-filter-bulan')?.value || new Date().toLocaleString('id',{month:'long'});
-  const tahun = String(new Date().getFullYear());
+  const bulan = document.getElementById('ots-filter-bulan')?.value || '';
   showOverlay('Mengambil data OTS...');
   try {
     const json = await fetchGAS({action:'getOTS', pin:currentPin, bulan});
-    hideOverlay();
-    if(json.status!=='ok'||!json.data?.length){
+    if(json.status!=='ok' || !json.data?.length){
+      hideOverlay();
       showToast('Tidak ada data OTS periode ini','info'); return;
     }
+
     showOverlay('Menyusun Excel OTS...');
     const wb = XLSX.utils.book_new();
 
-    // Sheet Rekap
-    const rekapRows = [];
+    // Sheet Rekap OTS
+    const rekapRows = [['ID OTS','Tanggal','Branch Office','Petugas BO','Jabatan','Tim IT','Jml Kegiatan','Serah Terima','Last Edit']];
     for(const r of json.data){
-      // Ambil detail kegiatan dari Drive
-      let kegText = 'Kunjungan OTS ke '+(r.bo||'').toUpperCase();
+      const timIT = typeof r.timIT === 'string' ? r.timIT : (Array.isArray(r.timIT) ? r.timIT.join(', ') : '');
+      rekapRows.push([
+        r.id, r.tgl, r.bo, r.namaBo||'', r.jabatanBo||'',
+        timIT, r.jumlahKegiatan||0,
+        r.adaSerah?'Ya':'Tidak', r.lastEdit||''
+      ]);
+    }
+    const wsRekap = XLSX.utils.aoa_to_sheet(rekapRows);
+    wsRekap['!cols'] = [100,90,150,150,120,200,80,80,150].map(w=>({wch:Math.round(w/7)}));
+    XLSX.utils.book_append_sheet(wb, wsRekap, 'Rekap OTS');
+
+    // Detail per OTS - ambil dari Drive jika ada
+    let detailRows = [['ID OTS','Tanggal','Branch Office','No','Kegiatan','Hasil Kegiatan','Petugas']];
+    for(const r of json.data){
       try {
         const det = await fetchGAS({action:'getOTSDetail', id:r.id, pin:currentPin});
-        if(det.status==='ok' && det.data?.kegiatan?.length){
-          kegText = (r.bo||'').toUpperCase()+': '+det.data.kegiatan.map(k=>{
-            let t=(k.kegiatan||'').trim();
-            if(k.hasil&&k.hasil.trim()) t+=', '+k.hasil.trim();
-            return t;
-          }).filter(Boolean).join(', ');
+        if(det.status==='ok' && det.data?.kegiatan){
+          det.data.kegiatan.forEach((kg,i)=>{
+            detailRows.push([r.id, r.tgl, r.bo, i+1, kg.kegiatan||'', kg.hasil||'', kg.petugas||'']);
+          });
+        } else {
+          detailRows.push([r.id, r.tgl, r.bo, '-', '-', '-', '-']);
         }
-      } catch(e){}
-      const tglFmt = r.tgl ? new Date(r.tgl).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}) : r.tgl;
-      const timArr = Array.isArray(r.timIT) ? r.timIT.join(', ') : (r.timIT||'');
-      rekapRows.push({
-        'Tanggal': tglFmt,
-        'Branch Office': r.bo||'',
-        'Tim IT': timArr,
-        'Kegiatan': kegText,
-        'Petugas BO': r.namaBo||r.petugasBO||'',
-        'Jabatan BO': r.jabatanBo||'',
-        'Jml Kegiatan': r.jumlahKegiatan||'',
-        'Serah Terima': r.adaSerah?'Ya':'Tidak',
-      });
+      } catch(e) {
+        detailRows.push([r.id, r.tgl, r.bo, '-', '-', '-', '-']);
+      }
     }
-    const ws = XLSX.utils.json_to_sheet(rekapRows);
-    // Set col widths
-    ws['!cols']=[{wch:18},{wch:22},{wch:28},{wch:55},{wch:22},{wch:18},{wch:12},{wch:12}];
-    XLSX.utils.book_append_sheet(wb,'Laporan OTS '+bulan+' '+tahun,ws);
+    const wsDetail = XLSX.utils.aoa_to_sheet(detailRows);
+    wsDetail['!cols'] = [100,90,150,50,200,200,150].map(w=>({wch:Math.round(w/7)}));
+    XLSX.utils.book_append_sheet(wb, wsDetail, 'Detail Kegiatan');
 
-    const fname = 'Laporan_OTS_'+bulan+'_'+tahun+'.xlsx';
+    // Download
     hideOverlay();
-    XLSX.writeFile(wb, fname);
-    showToast('File '+fname+' diunduh!','ok');
+    const fname = 'OTS_' + (bulan||'Semua') + '_' + new Date().getFullYear() + '.xlsx';
+    const wbOut = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const blob  = new Blob([wbOut], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url   = URL.createObjectURL(blob);
+    const a     = document.createElement('a');
+    a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },1000);
+    showToast('File ' + fname + ' diunduh!','ok');
   } catch(e){
     hideOverlay();
-    showToast('Gagal: '+e.message,'err');
+    showToast('Gagal export OTS: '+e.message,'err');
   }
 }
