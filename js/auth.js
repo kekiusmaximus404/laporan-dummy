@@ -62,11 +62,14 @@ async function doLogin(){
     localStorage.setItem('hn_pin',pin);
     localStorage.setItem('hn_role',user.role);
     localStorage.setItem('hn_menu_cfg', JSON.stringify(user.menuConfig||{}));
+    localStorage.setItem('hn_user', JSON.stringify(currentUser)); // update cache
     _cacheMyUser(currentUser);
     err.textContent='';
     showApp();
-    // Apply menu config for PIC
-    if(user.role !== 'manager') _applyMenuConfig(user.menuConfig||{});
+    // Apply menu config for PIC - setTimeout ensures DOM is updated after showApp
+    if(user.role !== 'manager'){
+      setTimeout(function(){ _applyMenuConfig(user.menuConfig||{}); }, 50);
+    }
   } catch(e){
     err.textContent='Gagal koneksi ke server.';
   }
