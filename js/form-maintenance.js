@@ -283,14 +283,14 @@ async function simpanDanKirim(){
       resetForm();
       if(isEdit){
         // Mode edit - kembali ke log harian
-        setTimeout(()=>{ switchMenu('log'); setTimeout(()=>switchLogTab('maintenance'),100); }, 800);
+        switchMenu('log'); switchLogTab('maintenance');
       } else {
         // Input baru - tetap di form, clear saja
         resetForm();
       }
       // Jika mode edit, kembali ke log setelah simpan
       if(isEdit){
-        setTimeout(()=>{ switchMenu('log'); setTimeout(()=>switchLogTab('maintenance'),100); }, 800);
+        switchMenu('log'); switchLogTab('maintenance');
       }
     } else {
       showToast('Gagal: ' + (json.message||'error'), 'err');
