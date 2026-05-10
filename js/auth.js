@@ -68,7 +68,7 @@ async function doLogin(){
     showApp();
     // Apply menu config for PIC - setTimeout ensures DOM is updated after showApp
     if(user.role !== 'manager'){
-      setTimeout(function(){ _applyMenuConfig(user.menuConfig||{}); }, 50);
+      setTimeout(function(){ _applyMenuConfig(user.menuConfig||{}); }, 200);
     }
   } catch(e){
     err.textContent='Gagal koneksi ke server.';
