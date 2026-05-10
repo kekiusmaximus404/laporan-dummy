@@ -7,8 +7,19 @@ function _initHomePic(){
   var mgrPane = document.getElementById('home-manager');
   var picPane = document.getElementById('home-pic');
   if(currentRole === 'manager'){
-    if(mgrPane) mgrPane.style.display = 'flex';
+    if(mgrPane) mgrPane.style.display = 'block';
     if(picPane) picPane.style.display = 'none';
+    // Init greeting & tanggal manager
+    var mgrGreet = document.getElementById('mgr-greeting');
+    var mgrDate  = document.getElementById('mgr-date');
+    var now = new Date();
+    var h = now.getHours();
+    var greetStr = h < 11 ? 'Selamat Pagi' : h < 15 ? 'Selamat Siang' : h < 18 ? 'Selamat Sore' : 'Selamat Malam';
+    var uname = (currentUser && currentUser.name) || 'Manager';
+    if(mgrGreet) mgrGreet.textContent = greetStr + ', ' + uname + '!';
+    var days4=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    var months4=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    if(mgrDate) mgrDate.textContent = days4[now.getDay()] + ', ' + now.getDate() + ' ' + months4[now.getMonth()] + ' ' + now.getFullYear();
     return;
   }
   if(mgrPane) mgrPane.style.display = 'none';
