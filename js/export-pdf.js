@@ -369,15 +369,26 @@ async function exportBerkasPDF(id) {
 
 // Buka PDF base64 di window baru, tambah watermark overlay saat print
 function _openPdfWithWatermark(base64, namaFile) {
-  var dataUrl = 'data:application/pdf;base64,' + base64;
-  var wmText  = 'Diterbitkan ITD CU Keling Kumang';
+  // Direct download - no browser preview
+  var pdfName = namaFile.replace(/\.docx$/i,'.pdf').replace(/\.doc$/i,'.pdf').replace(/\.xlsx?$/i,'.pdf');
 
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'    + '<title>' + _esc(namaFile) + '</title>'    + '<style>'    + '*{margin:0;padding:0;box-sizing:border-box;}'    + 'body{background:#525659;display:flex;flex-direction:column;align-items:center;min-height:100vh;}'    + '.toolbar{width:100%;background:#323639;padding:10px 20px;display:flex;align-items:center;gap:12px;position:fixed;top:0;left:0;z-index:100;}'    + '.toolbar button{background:#1e3a5f;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;}'    + '.toolbar span{color:#ccc;font-size:13px;flex:1;}'    + '.viewer{margin-top:56px;width:100%;display:flex;flex-direction:column;align-items:center;padding:20px 0;}'    + 'iframe{width:850px;max-width:100%;height:1100px;border:none;box-shadow:0 4px 24px rgba(0,0,0,0.4);}'    + '@media print{'    + '.toolbar{display:none!important;}'    + '.viewer{margin:0;padding:0;}'    + 'iframe{width:100%;height:100vh;box-shadow:none;}'    + '.wm-print{display:block!important;}'    + '}'    + '.wm-print{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);'    + 'font-size:28pt;font-weight:900;color:rgba(30,58,95,0.12);white-space:nowrap;'    + 'text-align:center;pointer-events:none;z-index:9999;line-height:2;font-family:Arial;}'    + '</style></head><body>'    + '<div class="toolbar">'    + '<span>📄 ' + _esc(namaFile) + '</span>'    + '<a id="dl-btn" download="' + _esc(namaFile.replace(/\.docx$/i,'.pdf').replace(/\.doc$/i,'.pdf')) + '" href="' + dataUrl + '" style="background:#059669;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;">⬇ Download PDF</a>'    + '<button onclick="window.print()">🖨 Print</button>'    + '<button onclick="window.close()">✕ Tutup</button>'    + '</div>'    + '<div class="viewer">'    + '<iframe src="' + dataUrl + '"></iframe>'    + '</div>'    + '<div class="wm-print">' + wmText + '</div>'    + '</body></html>';
-
-  var win = window.open('','_blank');
-  if(!win){ showToast('Popup diblokir browser. Izinkan popup.','info'); return; }
-  win.document.write(html);
-  win.document.close();
+  // Decode base64 -> Blob -> download
+  try {
+    var byteChars = atob(base64);
+    var byteArr   = new Uint8Array(byteChars.length);
+    for (var i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+    var blob = new Blob([byteArr], {type: 'application/pdf'});
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href     = url;
+    a.download = pdfName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+    showToast('✅ PDF "' + pdfName + '" berhasil diunduh!', 'ok');
+  } catch(e) {
+    showToast('Gagal download PDF: ' + e.message, 'err');
+  }
 }
 
 // Fallback: buka file dari Drive URL di iframe
