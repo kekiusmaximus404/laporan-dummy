@@ -13,7 +13,7 @@ async function loadAdminUsers(){
     var json=await fetchGAS({action:'getUsers',pin:currentPin});
     if(json.status!=='ok'){el.innerHTML='<div class="no-data">Gagal memuat data user.</div>';return;}
     _adminUsers=json.data||[];
-    renderAdminPage();
+    _renderAdminUsers();
   } catch(e){el.innerHTML='<div class="no-data">Gagal koneksi.</div>';}
 }
 
@@ -78,7 +78,10 @@ function openAddUser(){
   var um=document.getElementById('user-modal');if(um)um.style.display='flex';
 }
 
-function openEditUser(name,idx){
+function openEditUser(idx){
+  var u = _adminUsers[idx];
+  if(!u) return;
+  var name = u.name;
   document.getElementById('user-modal-title').textContent='✏️ Edit — '+name;
   document.getElementById('user-modal-idx').value=idx;
   document.getElementById('user-modal-name').value=name;
@@ -117,12 +120,11 @@ async function toggleUserStatus(idx, currentEnabled){
   if(!u) return;
   showOverlay('Mengubah status...');
   try {
-    var editRow = idx + 2;
     var fd = new FormData();
     fd.append('data', JSON.stringify({
-      action:'saveUser', pin:currentPin,
-      userPin: u.pin, userName: u.name,
-      userEnabled: !currentEnabled, editRow: editRow
+      action:'setUserEnabled', pin:currentPin,
+      name: u.name,
+      enabled: !currentEnabled
     }));
     var res  = await fetch(getUrl(),{method:'POST',body:fd});
     var json = await res.json();
@@ -140,9 +142,8 @@ async function deleteUser(idx){
   if(!confirm('Hapus user '+u.name+'? Aksi ini tidak bisa dibatalkan.')) return;
   showOverlay('Menghapus...');
   try {
-    var editRow = idx + 2;
     var fd = new FormData();
-    fd.append('data', JSON.stringify({action:'deleteUser', pin:currentPin, editRow:editRow}));
+    fd.append('data', JSON.stringify({action:'deleteUser', pin:currentPin, name:u.name}));
     var res  = await fetch(getUrl(),{method:'POST',body:fd});
     var json = await res.json();
     hideOverlay();
@@ -305,3 +306,4 @@ function _applyMenuConfig(cfg){
   var secUp = document.getElementById('sb-sec-upload-label');
   if(secUp) secUp.style.display = (cfg['sb-btn-upload'] !== false) ? '' : 'none';
 }
+function renderAdminPage(){ _renderAdminUsers(); }
