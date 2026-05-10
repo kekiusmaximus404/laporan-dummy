@@ -63,11 +63,8 @@ function showApp(){
       var el=document.getElementById(id);
       if(el) el.style.display='none'; // sembunyikan dulu, _applyMenuConfig yg kontrol
     });
-    // Section labels: sembunyikan dulu
-    ['sb-sec-laporan','sb-sec-upload-label'].forEach(function(id){
-      var el=document.getElementById(id);
-      if(el) el.style.display='none';
-    });
+    // Section labels dikontrol oleh _applyMenuConfig - jangan hide di sini
+    // agar tidak perlu counter-hide
   }
   // PIC: _applyMenuConfig dipanggil dari auth.js setelah showApp
   // Lock PIC selects untuk non-manager
@@ -141,7 +138,7 @@ window.onload = function(){
         localStorage.setItem('hn_user', JSON.stringify(currentUser));
         showApp();
         if(_vj.data.role !== 'manager'){
-          setTimeout(function(){ _applyMenuConfig(_vj.data.menuConfig||{}); }, 50);
+          setTimeout(function(){ _applyMenuConfig(_vj.data.menuConfig||{}); }, 200);
         }
       } else { localStorage.removeItem('hn_pin'); localStorage.removeItem('hn_role'); }
     } catch(e){
@@ -152,7 +149,7 @@ window.onload = function(){
         if(savedUser2.role !== 'manager'){
           var cachedCfg = {};
           try{ var _mc=localStorage.getItem('hn_menu_cfg'); if(_mc) cachedCfg=JSON.parse(_mc); }catch(e){}
-          setTimeout(function(){ _applyMenuConfig(cachedCfg); }, 50);
+          setTimeout(function(){ _applyMenuConfig(cachedCfg); }, 200);
         }
       }
     }
