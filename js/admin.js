@@ -278,33 +278,40 @@ async function saveMenuConfig(){
 }
 
 function _applyMenuConfig(cfg){
-  // cfg = {id: true/false} dari Sheet GAS
-  // Jika tidak ada config -> gunakan defaultOn dari PIC_MENU_ITEMS
-  var hasCfg = cfg && typeof cfg === 'object' && Object.keys(cfg).length > 0;
-  var showSec = {};
+  try {
+    // cfg = {id: true/false} dari Sheet GAS
+    // Jika tidak ada config -> gunakan defaultOn dari PIC_MENU_ITEMS
+    if(typeof PIC_MENU_ITEMS === 'undefined') return;
+    var hasCfg = cfg && typeof cfg === 'object' && Object.keys(cfg).length > 0;
+    var showSec = {};
 
-  PIC_MENU_ITEMS.forEach(function(item){
-    var el = document.getElementById(item.id);
-    if(!el) return;
-    var visible;
-    if(hasCfg){
-      // Ada config: false = hidden, true/undefined = tampil
-      visible = cfg[item.id] !== false;
-    } else {
-      // Belum ada config: gunakan defaultOn
-      visible = item.defaultOn === true;
-    }
-    el.style.display = visible ? '' : 'none';
-    if(visible && item.section) showSec[item.section] = true;
-  });
+    PIC_MENU_ITEMS.forEach(function(item){
+      var el = document.getElementById(item.id);
+      if(!el) return;
+      var visible;
+      if(hasCfg){
+        // Ada config tersimpan: pakai nilai dari config
+        visible = cfg[item.id] !== false;
+      } else {
+        // Belum ada config: gunakan defaultOn
+        visible = item.defaultOn === true;
+      }
+      el.style.display = visible ? '' : 'none';
+      if(visible && item.section) showSec[item.section] = true;
+    });
 
-  // Section labels: tampil hanya jika ada minimal 1 item visible di section
-  // Note: section "Input" tidak punya id di HTML (tidak ada sb-sec-input)
-  // sb-sec-laporan = "Log & Laporan", sb-sec-upload-label = "Berkas"
-  var secLog = document.getElementById('sb-sec-laporan');
-  if(secLog) secLog.style.display = showSec['Log & Laporan'] ? '' : 'none';
+    // Tampil/sembunyikan section labels
+    var secInput = document.getElementById('sb-sec-input');
+    if(secInput) secInput.style.display = showSec['Input'] ? '' : 'none';
 
-  var secBerkas = document.getElementById('sb-sec-upload-label');
-  if(secBerkas) secBerkas.style.display = showSec['Berkas'] ? '' : 'none';
+    var secLog = document.getElementById('sb-sec-laporan');
+    if(secLog) secLog.style.display = showSec['Log & Laporan'] ? '' : 'none';
+
+    var secBerkas = document.getElementById('sb-sec-upload-label');
+    if(secBerkas) secBerkas.style.display = showSec['Berkas'] ? '' : 'none';
+
+  } catch(e) {
+    console.error('_applyMenuConfig error:', e);
+  }
 }
 function renderAdminPage(){ _renderAdminUsers(); }
