@@ -240,7 +240,9 @@ function _mcfgSelectAll(val){
     var cb = document.getElementById('mcfg-'+item.id);
     if(cb){
       cb.checked = val;
-      cb.parentElement.style.opacity = val ? '1' : '0.45';
+      // Fix: target the span inside the label, not the label itself
+      var span = cb.parentElement.querySelector('span');
+      if(span) span.style.opacity = val ? '1' : '0.45';
     }
   });
 }
@@ -272,7 +274,11 @@ async function saveMenuConfig(){
       showToast('Konfigurasi menu disimpan','ok');
       _adminUsers[_menuConfigTarget].menuConfig = cfg;
       closeMenuConfig();
-      // Apply immediately if this user is currently logged in (shouldn't happen for manager editing pic)
+      // Apply immediately if this PIC is currently logged in
+      if(currentRole !== 'manager' && currentUser && currentUser.name === u.name){
+        localStorage.setItem('hn_menu_cfg', JSON.stringify(cfg));
+        _applyMenuConfig(cfg);
+      }
     } else showToast(json.message||'Gagal','err');
   } catch(e){ hideOverlay(); showToast('Gagal: '+e.message,'err'); }
 }
