@@ -20,6 +20,8 @@ function _initHomePic(){
     var days4=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     var months4=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     if(mgrDate) mgrDate.textContent = days4[now.getDay()] + ', ' + now.getDate() + ' ' + months4[now.getMonth()] + ' ' + now.getFullYear();
+    // Load PIC list untuk manager - auto load dashboard PIC pertama
+    _loadManagerPicList();
     return;
   }
   if(mgrPane) mgrPane.style.display = 'none';
@@ -207,3 +209,94 @@ function _renderPicDashboard(d){
 }
 
 function _slugName(name){ return name.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+// ── Manager: load daftar PIC dan tampilkan tab ───────────────────
+var _mgrActivePic = null;
+
+async function _loadManagerPicList(){
+  var tabsEl = document.getElementById('mgr-pic-tabs');
+  if(!tabsEl) return;
+  tabsEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:4px;">⏳ Memuat daftar PIC...</div>';
+
+  try {
+    var json = await fetchGAS({action:'getUsers', pin:currentPin});
+    var users = (json.status==='ok' && json.data) ? json.data : [];
+    var pics = users.filter(function(u){ return u.role !== 'manager' && u.enabled; });
+
+    if(!pics.length){
+      tabsEl.innerHTML = '<div style="font-size:12px;color:var(--text3);">Tidak ada PIC aktif.</div>';
+      return;
+    }
+
+    // Render tab buttons
+    tabsEl.innerHTML = '';
+    pics.forEach(function(pic, i){
+      var btn = document.createElement('button');
+      btn.textContent = pic.name;
+      btn.dataset.picName = pic.name;
+      btn.style.cssText = 'padding:8px 18px;border-radius:99px;border:1.5px solid var(--border2);'
+        + 'background:var(--surface2);color:var(--text2);font-size:13px;font-weight:600;'
+        + 'cursor:pointer;font-family:inherit;transition:all 0.15s;';
+      btn.onclick = function(){
+        // Update active style
+        tabsEl.querySelectorAll('button').forEach(function(b){
+          b.style.background='var(--surface2)'; b.style.color='var(--text2)';
+          b.style.borderColor='var(--border2)';
+        });
+        btn.style.background='#1e3a5f'; btn.style.color='#fff'; btn.style.borderColor='#1e3a5f';
+        _loadManagerPicDash(pic.name);
+      };
+      tabsEl.appendChild(btn);
+      // Auto-click first PIC
+      if(i === 0){ btn.click(); }
+    });
+  } catch(e){
+    tabsEl.innerHTML = '<div style="font-size:12px;color:var(--text3);">Gagal memuat daftar PIC.</div>';
+  }
+}
+
+async function _loadManagerPicDash(picName){
+  _mgrActivePic = picName;
+  var wrap  = document.getElementById('mgr-pic-dash-wrap');
+  var body  = document.getElementById('mgr-pic-dash-body');
+  var avEl  = document.getElementById('mgr-pic-avatar');
+  var nmEl  = document.getElementById('mgr-pic-name');
+  var dtEl  = document.getElementById('mgr-pic-date');
+  if(!wrap || !body) return;
+
+  wrap.style.display = 'block';
+  if(avEl) avEl.textContent = picName.charAt(0).toUpperCase();
+  if(nmEl) nmEl.textContent = picName;
+  var now2 = new Date();
+  var days5=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  var months5=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  if(dtEl) dtEl.textContent = days5[now2.getDay()] + ', ' + now2.getDate() + ' ' + months5[now2.getMonth()] + ' ' + now2.getFullYear();
+
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">⏳ Memuat data ' + _hesc(picName) + '...</div>';
+
+  try {
+    var json = await fetchGAS({action:'getMyDashboard', pin:currentPin, picName:picName});
+    if(json.status !== 'ok' || !json.data){
+      body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Gagal memuat dashboard ' + _hesc(picName) + '.</div>';
+      return;
+    }
+    // Render menggunakan fungsi yang sama dengan PIC view — tapi inject ke mgr-pic-dash-body
+    _renderPicDashboardTo(body, json.data);
+  } catch(e){
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Tidak dapat terhubung ke server.</div>';
+  }
+}
+
+// Versi _renderPicDashboard yang bisa diinject ke elemen mana saja
+function _renderPicDashboardTo(targetEl, d){
+  // Simpan body PIC asli sementara, ganti target, render, restore
+  var origEl = document.getElementById('pic-dash-body');
+  var origContent = origEl ? origEl.innerHTML : '';
+  // Gunakan targetEl sebagai target render
+  var fakeId = 'pic-dash-body';
+  if(origEl) origEl.id = '__pic_dash_body_hidden';
+  targetEl.id = fakeId;
+  _renderPicDashboard(d);
+  targetEl.id = 'mgr-pic-dash-body';
+  if(origEl){ origEl.id = fakeId; }
+}
