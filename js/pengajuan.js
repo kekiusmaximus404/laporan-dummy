@@ -383,21 +383,7 @@ function exportPengajuanPDF(r){
           ${(r.notas||[]).map(src=>`<img src="${src}" style="width:100%;object-fit:contain;border:1px solid #ccc;">`).join('')}
         </div></div>` : '';
 
-  const KOP_PDF = `<table width="100%" style="border-collapse:collapse;margin-bottom:0;"><tr>
-    <td width="85" style="border:none;padding:0;vertical-align:middle;">
-      <img src="${LOGO_KOP_B64}" style="height:68px;width:auto;display:block;">
-    </td>
-    <td style="border:none;padding:0 8px;vertical-align:middle;text-align:center;">
-      <div style="font-weight:700;font-size:12.5pt;font-family:Arial;">CU KELING KUMANG</div>
-      <div style="font-size:7.5pt;font-family:Arial;margin-top:2px;">Jln. Sekadau - Sintang Km 27, Dusun Tapang Sambas-Tapang Kemayau</div>
-      <div style="font-size:7.5pt;font-family:Arial;">Desa Tapang Semadak, Kecamatan Sekadau Hilir, 79513, Kabupaten Sekadau, Kalimantan Barat</div>
-      <div style="font-size:7.5pt;font-family:Arial;">E-mail: invictus93@cukelingkumang.com | Website: www.cukelingkumang.com | Telp./WA: (+628)115711132</div>
-    </td>
-    <td width="85" style="border:none;padding:0;vertical-align:middle;text-align:right;">
-      <img src="${LOGO_CUKK_B64}" style="height:68px;width:auto;display:block;margin-left:auto;">
-    </td>
-  </tr></table>
-  <div style="border-top:3px double #000;margin:6px 0 12px;"></div>`;
+  const KOP_PDF = makeGlobalKOP();
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>Pengajuan Barang - ${r.tempat}</title>
@@ -430,26 +416,26 @@ function exportPengajuanPDF(r){
   <div style="margin-bottom:24px;font-size:11pt;">${r.tempat}, ${tglStr}</div>
   <table style="border:none;width:100%;">
     <tr>
-      <td style="border:none;width:33%;vertical-align:top;">
-        <div>Diajukan oleh :</div>
-        <div style="font-weight:700;">Manager Bidang H&amp;N</div>
-        <div style="height:60px;"></div>
-        <div style="border-top:1px solid #000;padding-top:4px;">&nbsp;</div>
-        <div>Tgl:</div>
+      <td style="border:none;width:33%;vertical-align:top;text-align:center;">
+        <div style="font-size:10pt;">Diajukan Oleh,</div>
+        <div style="font-weight:700;font-size:10pt;">Manager Bidang H&amp;N</div>
+        <div style="height:55px;"></div>
+        <div style="border-top:1px solid #000;padding-top:3px;font-weight:700;font-size:10pt;">Ridwan</div>
+        <div style="font-size:9pt;margin-top:2px;">${tglStr}</div>
       </td>
       <td style="border:none;width:33%;vertical-align:top;text-align:center;">
-        <div>Diketahui oleh:</div>
-        <div style="font-weight:700;">DEM ITD</div>
-        <div style="height:60px;"></div>
-        <div style="border-top:1px solid #000;padding-top:4px;">&nbsp;</div>
-        <div>Tgl:</div>
+        <div style="font-size:10pt;">Diketahui Oleh,</div>
+        <div style="font-weight:700;font-size:10pt;">DEM ITD</div>
+        <div style="height:55px;"></div>
+        <div style="border-top:1px solid #000;padding-top:3px;font-weight:700;font-size:10pt;">Vinsensius Rekat</div>
+        <div style="font-size:9pt;margin-top:2px;">${tglStr}</div>
       </td>
       <td style="border:none;width:33%;vertical-align:top;text-align:center;">
-        <div>Diketahui oleh:</div>
-        <div style="font-weight:700;">DEM APD</div>
-        <div style="height:60px;"></div>
-        <div style="border-top:1px solid #000;padding-top:4px;">&nbsp;</div>
-        <div>Tgl:</div>
+        <div style="font-size:10pt;">Diketahui Oleh,</div>
+        <div style="font-weight:700;font-size:10pt;">DEM APD</div>
+        <div style="height:55px;"></div>
+        <div style="border-top:1px solid #000;padding-top:3px;font-weight:700;font-size:10pt;">Aloysius Gonzaga</div>
+        <div style="font-size:9pt;margin-top:2px;">${tglStr}</div>
       </td>
     </tr>
   </table>
