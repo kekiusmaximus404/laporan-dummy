@@ -220,10 +220,11 @@ function openMenuConfig(idx){
   Object.keys(sections).forEach(function(sec){
     html += '<div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;padding:8px 0 6px;border-bottom:2px solid var(--border2);margin-bottom:4px;">'+sec+'</div>';
     sections[sec].forEach(function(item){
-      var checked = cfg[item.id] === false ? '' : 'checked';
-      var isOn = checked === 'checked';
+      // Jika belum ada config: gunakan defaultOn dari PIC_MENU_ITEMS
+      var hasCfg = cfg && Object.keys(cfg).length > 0;
+      var isOn = hasCfg ? (cfg[item.id] !== false) : (item.defaultOn === true);
       html += '<label style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--border);cursor:pointer;">';
-      html += '<input type="checkbox" id="mcfg-'+item.id+'" '+(isOn?'checked':'')+' style="width:16px;height:16px;accent-color:var(--accent);" onchange="this.parentElement.style.opacity=this.checked?String(1):String(0.45)">';
+      html += '<input type="checkbox" id="mcfg-'+item.id+'" '+(isOn?'checked':'')+' style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;" onchange="this.parentElement.querySelector(\'span\').style.opacity=this.checked?\'1\':\'0.45\'">';
       html += '<span style="font-size:13px;font-weight:600;'+(isOn?'':'opacity:0.45;')+'">'+item.label+'</span>';
       html += '</label>';
     });
@@ -278,32 +279,33 @@ async function saveMenuConfig(){
 
 function _applyMenuConfig(cfg){
   // cfg = {id: true/false} dari Sheet GAS
-  // false = sembunyikan, true atau tidak ada key = tampilkan (default show)
-  if(!cfg || typeof cfg !== 'object') {
-    // Tidak ada config -> tampilkan semua menu PIC
-    PIC_MENU_ITEMS.forEach(function(item){
-      var el = document.getElementById(item.id);
-      if(el) el.style.display = '';
-    });
-    return;
-  }
+  // Jika tidak ada config -> gunakan defaultOn dari PIC_MENU_ITEMS
+  var hasCfg = cfg && typeof cfg === 'object' && Object.keys(cfg).length > 0;
   var showSec = {};
+
   PIC_MENU_ITEMS.forEach(function(item){
-    if(item.isSection) return;
     var el = document.getElementById(item.id);
     if(!el) return;
-    // Default tampil kecuali secara eksplisit di-set false
-    if(cfg[item.id] === false) {
-      el.style.display = 'none';
+    var visible;
+    if(hasCfg){
+      // Ada config: false = hidden, true/undefined = tampil
+      visible = cfg[item.id] !== false;
     } else {
-      el.style.display = '';
-      showSec[item.section] = true;
+      // Belum ada config: gunakan defaultOn
+      visible = item.defaultOn === true;
     }
+    el.style.display = visible ? '' : 'none';
+    if(visible && item.section) showSec[item.section] = true;
   });
-  // Section label: sembunyikan jika semua item di section tsb hidden
+
+  // Section labels: tampil hanya jika ada minimal 1 item visible di section
+  var secInput = document.getElementById('sb-sec-input');
+  if(secInput) secInput.style.display = showSec['Input'] ? '' : 'none';
+
   var secLog = document.getElementById('sb-sec-laporan');
   if(secLog) secLog.style.display = showSec['Log & Laporan'] ? '' : 'none';
-  var secUp = document.getElementById('sb-sec-upload-label');
-  if(secUp) secUp.style.display = (cfg['sb-btn-upload'] !== false) ? '' : 'none';
+
+  var secBerkas = document.getElementById('sb-sec-upload-label');
+  if(secBerkas) secBerkas.style.display = showSec['Berkas'] ? '' : 'none';
 }
 function renderAdminPage(){ _renderAdminUsers(); }
