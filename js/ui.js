@@ -36,23 +36,40 @@ function showApp(){
   // managerOnly: sembunyikan untuk PIC, tampilkan untuk manager
   // PIC sees: Maintenance, OTS, Log Harian, Rekap Absensi
   // Manager sees everything
-  var managerOnly = ['sb-btn-pengajuan','sb-btn-rep-barang','sb-btn-rep-pengajuan',
-    'sb-btn-rep-maintenance','sb-btn-rep-ots',
-    'mbtn-setting','sb-sec-sistem',
-    'sb-btn-upload','sb-sec-upload-label'];
-  managerOnly.forEach(function(id){
+  // Manager: tampilkan semua. PIC: sembunyikan menu sistem, serahkan menu lain ke _applyMenuConfig
+  var alwaysManagerOnly = ['mbtn-setting','sb-sec-sistem'];
+  alwaysManagerOnly.forEach(function(id){
     var el=document.getElementById(id);
     if(el) el.style.display=isManager?'':'none';
   });
-  // PIC: show Log & Laporan section, Log Harian, Rekap Absensi
-  if(!isManager){
-    ['sb-sec-laporan','mbtn-log','sb-btn-rep-absensi'].forEach(function(id){
+  if(isManager){
+    // Manager: tampilkan SEMUA menu
+    ['sb-btn-pengajuan','sb-btn-rep-barang','sb-btn-rep-pengajuan',
+     'sb-btn-rep-maintenance','sb-btn-rep-ots','sb-btn-upload',
+     'sb-sec-upload-label','sb-sec-laporan','mbtn-log','sb-btn-rep-absensi',
+     'sb-btn-maintenance','sb-btn-ots'].forEach(function(id){
       var el=document.getElementById(id);
       if(el) el.style.display='';
     });
+  } else {
+    // PIC: sembunyikan semua configurable menu dulu,
+    // _applyMenuConfig akan tampilkan sesuai config
+    var picMenuIds = typeof PIC_MENU_ITEMS !== 'undefined'
+      ? PIC_MENU_ITEMS.map(function(x){return x.id;})
+      : ['sb-btn-maintenance','sb-btn-ots','sb-btn-pengajuan','mbtn-log',
+         'sb-btn-rep-maintenance','sb-btn-rep-ots','sb-btn-rep-barang',
+         'sb-btn-rep-pengajuan','sb-btn-rep-absensi','sb-btn-upload'];
+    picMenuIds.forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.style.display='none'; // sembunyikan dulu, _applyMenuConfig yg kontrol
+    });
+    // Section labels: sembunyikan dulu
+    ['sb-sec-laporan','sb-sec-upload-label'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.style.display='none';
+    });
   }
-  // Untuk PIC: _applyMenuConfig akan override berdasarkan config manager
-  // Dipanggil setelah showApp selesai (lihat doLogin dan window.onload)
+  // PIC: _applyMenuConfig dipanggil dari auth.js setelah showApp
   // Lock PIC selects untuk non-manager
   _applyPicLock();
   // Hide absensi PIC filter for non-manager
@@ -89,14 +106,19 @@ function showApp(){
   const bulanEl = document.getElementById('ots-filter-bulan');
   if(bulanEl && BULAN_NAMES) bulanEl.value = BULAN_NAMES[now.getMonth()];
 
-  // Tampilkan HOME screen
+  // Tampilkan HOME screen langsung
   document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.menu-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.sub-bar').forEach(b=>b.style.display='none');
   const homePane = document.getElementById('pane-home');
   if(homePane) homePane.classList.add('active');
+  // Update top bar title
+  var topTitle = document.getElementById('top-bar-title');
+  if(topTitle) topTitle.textContent = 'Beranda';
 
-  switchMenu('home');if(typeof _initHomePic==='function')_initHomePic();}
+  // Langsung init dashboard (PIC) atau manager home
+  if(typeof _initHomePic === 'function') _initHomePic();
+}
 
 window.onload = function(){
   (async function(){
@@ -143,7 +165,11 @@ function switchMenu(menu){
   var el=document.getElementById('top-bar-title');if(el&&titles[menu])el.textContent=titles[menu];
   document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('active');});
   if(menu==='home'){var p=document.getElementById('pane-home');if(p)p.classList.add('active');if(typeof _initHomePic==='function')_initHomePic();}
-  else if(menu==='log'){var p=document.getElementById('pane-log');if(p)p.classList.add('active');if(typeof loadLogHarian==='function')loadLogHarian();}
+  else if(menu==='log'){
+    var p=document.getElementById('pane-log');if(p)p.classList.add('active');
+    if(typeof loadLog==='function') loadLog();
+    if(typeof loadLogOTS==='function') loadLogOTS();
+  }
   else if(menu==='setting'){var p=document.getElementById('pane-setting');if(p)p.classList.add('active');var ac=document.getElementById('admin-card');if(ac)ac.style.display=currentRole==='manager'?'block':'none';if(currentRole==='manager')loadAdminUsers();}
   else if(menu==='upload'){var p=document.getElementById('pane-upload');if(p)p.classList.add('active');loadBerkasList();}
   else if(menu==='input'){var subs=['maintenance','ots','pengajuan'];var s=subs.indexOf(currentSub)>=0?currentSub:'maintenance';switchSub(s,'input');}
@@ -156,7 +182,13 @@ function switchSub(sub,menu){
   var pane=document.getElementById('pane-'+sub);if(pane)pane.classList.add('active');
   var subT={'maintenance':'Maintenance','ots':'Form OTS','pengajuan':'Form Pengajuan','rep-maintenance':'Report Maintenance','rep-ots':'Report OTS','rep-barang':'Penggunaan Barang','rep-pengajuan':'Pengajuan Barang','rep-absensi':'Absensi'};
   var el=document.getElementById('top-bar-title');if(el&&subT[sub])el.textContent=subT[sub];
-  if(sub==='rep-maintenance')loadReportMaintenance();
+  if(sub==='rep-maintenance'){
+    // Set bulan ke bulan sekarang jika belum diset
+    var rmBulan=document.getElementById('rekap-bulan');
+    if(rmBulan&&!rmBulan.value&&typeof BULAN_NAMES!=='undefined')
+      rmBulan.value=BULAN_NAMES[new Date().getMonth()];
+    loadReportMaintenance();
+  }
   if(sub==='rep-ots')loadReportOTS(false);
   if(sub==='rep-pengajuan')loadReportPengajuan();
   if(sub==='rep-barang'){var e=document.getElementById('report-barang-content');if(e)e.innerHTML='<div class="no-data"><div class="no-data-icon">📦</div>Pilih filter lalu tekan Tampilkan.</div>';}
