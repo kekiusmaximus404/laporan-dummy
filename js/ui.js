@@ -110,10 +110,13 @@ function showApp(){
   const homePane = document.getElementById('pane-home');
   if(homePane) homePane.classList.add('active');
   // Update top bar title
-  var topTitle = document.getElementById('top-bar-title');
-  if(topTitle) topTitle.textContent = 'Beranda';
+  var topTitle2 = document.getElementById('top-bar-title');
+  if(topTitle2) topTitle2.textContent = 'Beranda';
+  // Set sidebar active → Beranda
+  var sbHome = document.querySelector('.sb-item.active');
+  if(!sbHome){ var firstSb=document.querySelector('.sb-item');if(firstSb)firstSb.classList.add('active'); }
 
-  // Langsung init dashboard (PIC) atau manager home
+  // Init dashboard langsung — PIC tampil dashboard, Manager tampil home bersih
   if(typeof _initHomePic === 'function') _initHomePic();
 }
 
@@ -181,14 +184,37 @@ function switchMenu(menu){
   }
   else if(menu==='setting'){var p=document.getElementById('pane-setting');if(p)p.classList.add('active');var ac=document.getElementById('admin-card');if(ac)ac.style.display=currentRole==='manager'?'block':'none';if(currentRole==='manager')loadAdminUsers();}
   else if(menu==='upload'){var p=document.getElementById('pane-upload');if(p)p.classList.add('active');loadBerkasList();}
-  else if(menu==='input'){var subs=['maintenance','ots','pengajuan'];var s=subs.indexOf(currentSub)>=0?currentSub:'maintenance';switchSub(s,'input');}
-  else if(menu==='report'){var subs=['rep-maintenance','rep-ots','rep-barang','rep-pengajuan','rep-absensi'];var s=subs.indexOf(currentSub)>=0?currentSub:'rep-maintenance';switchSub(s,'report');}
+  else if(menu==='input'){
+    var subs=['maintenance','ots','pengajuan'];
+    var s=subs.indexOf(currentSub)>=0?currentSub:'maintenance';
+    switchSub(s,'input');
+  }
+  else if(menu==='report'){
+    var subs=['rep-maintenance','rep-ots','rep-barang','rep-pengajuan','rep-absensi'];
+    var s=subs.indexOf(currentSub)>=0?currentSub:'rep-maintenance';
+    switchSub(s,'report');
+  }
 }
 
 function switchSub(sub,menu){
   currentSub=sub;
+  // Sembunyikan semua pane dan sub-bar dulu
   document.querySelectorAll('.pane').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('.sub-bar').forEach(function(b){b.style.display='none';});
+  // Tampilkan pane yang sesuai
   var pane=document.getElementById('pane-'+sub);if(pane)pane.classList.add('active');
+  // Tampilkan sub-bar yang sesuai berdasarkan menu parent
+  var subBarId = menu==='input'?'sub-input':menu==='report'?'sub-report':null;
+  if(subBarId){var sb=document.getElementById(subBarId);if(sb)sb.style.display='flex';}
+  // Update active button di sub-bar
+  if(subBarId){
+    var sbEl=document.getElementById(subBarId);
+    if(sbEl){
+      sbEl.querySelectorAll('.sub-btn').forEach(function(b){b.classList.remove('active');});
+      var activBtn=document.getElementById('sbtn-'+sub);
+      if(activBtn)activBtn.classList.add('active');
+    }
+  }
   var subT={'maintenance':'Maintenance','ots':'Form OTS','pengajuan':'Form Pengajuan','rep-maintenance':'Report Maintenance','rep-ots':'Report OTS','rep-barang':'Penggunaan Barang','rep-pengajuan':'Pengajuan Barang','rep-absensi':'Absensi'};
   var el=document.getElementById('top-bar-title');if(el&&subT[sub])el.textContent=subT[sub];
   if(sub==='rep-maintenance'){
