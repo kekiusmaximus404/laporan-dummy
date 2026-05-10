@@ -74,6 +74,10 @@ async function doUploadBerkas(){
   if(_uploadFile.size > maxSize){ showToast('Ukuran file max 15MB','info'); return; }
 
   var ext  = _getFileExt(_uploadFile.name);
+  // Validasi format yang didukung
+  var supportedExts = ['pdf','doc','docx','xls','xlsx','ppt','pptx','txt','csv'];
+  // Semua format didukung - tidak perlu konfirmasi
+  // GAS akan handle konversi PDF jika memungkinkan
   var mime = _FILE_MIME[ext] || _uploadFile.type || 'application/octet-stream';
 
   _setProgress(10,'Membaca file...');
@@ -113,7 +117,7 @@ async function doUploadBerkas(){
       if(pdfOk){
         showToast('✅ Upload berhasil + PDF tersimpan!','ok');
       } else {
-        showToast('✅ Upload berhasil. PDF sedang diproses atau format tidak didukung.','ok');
+        showToast('✅ Upload berhasil! (File Word/Excel dapat diconvert ke PDF via tombol PDF)','ok');
       }
       _clearUploadFile();
       document.getElementById('upload-title').value='';
