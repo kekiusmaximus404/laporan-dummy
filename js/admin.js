@@ -299,9 +299,8 @@ function _applyMenuConfig(cfg){
   });
 
   // Section labels: tampil hanya jika ada minimal 1 item visible di section
-  var secInput = document.getElementById('sb-sec-input');
-  if(secInput) secInput.style.display = showSec['Input'] ? '' : 'none';
-
+  // Note: section "Input" tidak punya id di HTML (tidak ada sb-sec-input)
+  // sb-sec-laporan = "Log & Laporan", sb-sec-upload-label = "Berkas"
   var secLog = document.getElementById('sb-sec-laporan');
   if(secLog) secLog.style.display = showSec['Log & Laporan'] ? '' : 'none';
 
